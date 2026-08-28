@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Setor XI — Catálogo de Camisas</title>
+  <meta name="description" content="Catálogo de camisas de futebol Setor XI. Vista o Jogo." />
+  <link rel="icon" href="img/logo-reverse.png" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <header class="site-header">
+    <div class="container site-header__inner">
+      <a class="brand" href="#" aria-label="Setor XI — Vista o Jogo, Viva o Esporte">
+        <img class="brand__logo" src="img/logo-reverse.png" alt="Setor XI" width="640" height="594" />
+      </a>
+      <span class="site-header__tag">Catálogo 2026</span>
+    </div>
+  </header>
+
+  <main class="container">
+    <section class="intro">
+      <p class="intro__eyebrow">Coleção</p>
+      <h1 class="intro__title">Camisas Setor XI</h1>
+      <p class="intro__text">
+        Modelos de exemplo para a vitrine. Categorias, preços e fotos
+        definitivas entram nas próximas versões do catálogo.
+      </p>
+    </section>
+
+    <div class="toolbar">
+      <div class="filters" id="filters" role="group" aria-label="Filtrar por categoria"></div>
+      <p class="toolbar__count" id="result-count"></p>
+    </div>
+
+    <section class="grid" id="product-grid" aria-live="polite"></section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container site-footer__inner">
+      <img class="site-footer__logo" src="img/logo-reverse.png" alt="Setor XI" width="640" height="594" />
+      <span class="site-footer__meta">© 2026 Setor XI · Todos os direitos reservados</span>
+    </div>
+  </footer>
+
+  <!-- Dados do catálogo: edite products.js -->
+  <script src="products.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
