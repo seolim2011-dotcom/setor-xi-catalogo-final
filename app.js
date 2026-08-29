@@ -13,6 +13,12 @@
   var gridEl = document.getElementById("product-grid");
   var filtersEl = document.getElementById("filters");
   var countEl = document.getElementById("result-count");
+  var bgEl = document.querySelector(".category-bg");
+
+  /* Fundo por categoria: chave = nome da categoria, valor = caminho da imagem */
+  var CATEGORY_BACKGROUNDS = {
+    "Camisas de Clube": "img/bg-camisas-de-clube.jpg",
+  };
 
   var BRL = new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -82,6 +88,7 @@
         if (category === activeCategory) return;
         activeCategory = category;
         syncFilterState();
+        updateBackground();
         swapGrid();
       });
       filtersEl.appendChild(button);
@@ -101,6 +108,18 @@
   var prefersReducedMotion =
     typeof window.matchMedia === "function" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* --- Fundo da categoria ativa --- */
+  function updateBackground() {
+    if (!bgEl) return;
+    var src = CATEGORY_BACKGROUNDS[activeCategory];
+    if (src) {
+      bgEl.style.backgroundImage = 'url("' + src + '")';
+      bgEl.classList.add("is-visible");
+    } else {
+      bgEl.classList.remove("is-visible");
+    }
+  }
 
   /* --- Troca de categoria com transição (sai -> entra escalonado) --- */
   function swapGrid() {
@@ -267,5 +286,6 @@
   /* --- Início --- */
   if (!gridEl || !filtersEl) return;
   buildFilters();
+  updateBackground();
   renderGrid(true);
 })();
