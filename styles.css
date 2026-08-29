@@ -181,6 +181,28 @@ a {
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 24px;
   padding: 32px 0 80px;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.grid--leaving {
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+}
+
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card--enter {
+  animation: card-enter 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .card {
@@ -298,6 +320,23 @@ a {
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/* ---------- Movimento reduzido ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .grid,
+  .grid--leaving {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .card,
+  .card--enter {
+    animation: none;
+    transition: none;
+  }
 }
 
 /* ---------- Responsivo ---------- */

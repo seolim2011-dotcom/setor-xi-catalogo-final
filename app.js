@@ -72,9 +72,10 @@
       button.textContent = category;
       button.setAttribute("aria-pressed", String(category === activeCategory));
       button.addEventListener("click", function () {
+        if (category === activeCategory) return;
         activeCategory = category;
         syncFilterState();
-        renderGrid();
+        swapGrid();
       });
       filtersEl.appendChild(button);
     });
@@ -90,8 +91,25 @@
     });
   }
 
+  var prefersReducedMotion =
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* --- Troca de categoria com transição (sai -> entra escalonado) --- */
+  function swapGrid() {
+    if (prefersReducedMotion) {
+      renderGrid(false);
+      return;
+    }
+    gridEl.classList.add("grid--leaving");
+    window.setTimeout(function () {
+      gridEl.classList.remove("grid--leaving");
+      renderGrid(true);
+    }, 160);
+  }
+
   /* --- Grade de produtos --- */
-  function renderGrid() {
+  function renderGrid(animate) {
     var visible = products.filter(function (product) {
       return activeCategory === "Todos" || product.category === activeCategory;
     });
@@ -111,8 +129,21 @@
       return;
     }
 
-    visible.forEach(function (product) {
-      gridEl.appendChild(createCard(product));
+    visible.forEach(function (product, index) {
+      var card = createCard(product);
+      if (animate && !prefersReducedMotion) {
+        card.classList.add("card--enter");
+        card.style.animationDelay = Math.min(index, 8) * 32 + "ms";
+        card.addEventListener(
+          "animationend",
+          function () {
+            card.classList.remove("card--enter");
+            card.style.animationDelay = "";
+          },
+          { once: true }
+        );
+      }
+      gridEl.appendChild(card);
     });
   }
 
@@ -170,5 +201,5 @@
   /* --- Início --- */
   if (!gridEl || !filtersEl) return;
   buildFilters();
-  renderGrid();
+  renderGrid(true);
 })();

@@ -190,6 +190,28 @@ a {
   grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 24px;
   padding: 32px 0 80px;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.grid--leaving {
+  opacity: 0;
+  transform: translateY(8px);
+  pointer-events: none;
+}
+
+@keyframes card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.card--enter {
+  animation: card-enter 0.34s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .card {
@@ -307,6 +329,23 @@ a {
 :focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
+}
+
+/* ---------- Movimento reduzido ---------- */
+
+@media (prefers-reduced-motion: reduce) {
+  .grid,
+  .grid--leaving {
+    transition: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .card,
+  .card--enter {
+    animation: none;
+    transition: none;
+  }
 }
 
 /* ---------- Responsivo ---------- */
@@ -751,9 +790,10 @@ window.SETOR_XI_PRODUCTS = [
       button.textContent = category;
       button.setAttribute("aria-pressed", String(category === activeCategory));
       button.addEventListener("click", function () {
+        if (category === activeCategory) return;
         activeCategory = category;
         syncFilterState();
-        renderGrid();
+        swapGrid();
       });
       filtersEl.appendChild(button);
     });
@@ -769,8 +809,25 @@ window.SETOR_XI_PRODUCTS = [
     });
   }
 
+  var prefersReducedMotion =
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  /* --- Troca de categoria com transição (sai -> entra escalonado) --- */
+  function swapGrid() {
+    if (prefersReducedMotion) {
+      renderGrid(false);
+      return;
+    }
+    gridEl.classList.add("grid--leaving");
+    window.setTimeout(function () {
+      gridEl.classList.remove("grid--leaving");
+      renderGrid(true);
+    }, 160);
+  }
+
   /* --- Grade de produtos --- */
-  function renderGrid() {
+  function renderGrid(animate) {
     var visible = products.filter(function (product) {
       return activeCategory === "Todos" || product.category === activeCategory;
     });
@@ -790,8 +847,21 @@ window.SETOR_XI_PRODUCTS = [
       return;
     }
 
-    visible.forEach(function (product) {
-      gridEl.appendChild(createCard(product));
+    visible.forEach(function (product, index) {
+      var card = createCard(product);
+      if (animate && !prefersReducedMotion) {
+        card.classList.add("card--enter");
+        card.style.animationDelay = Math.min(index, 8) * 32 + "ms";
+        card.addEventListener(
+          "animationend",
+          function () {
+            card.classList.remove("card--enter");
+            card.style.animationDelay = "";
+          },
+          { once: true }
+        );
+      }
+      gridEl.appendChild(card);
     });
   }
 
@@ -849,7 +919,7 @@ window.SETOR_XI_PRODUCTS = [
   /* --- Início --- */
   if (!gridEl || !filtersEl) return;
   buildFilters();
-  renderGrid();
+  renderGrid(true);
 })();
 
   </script>
