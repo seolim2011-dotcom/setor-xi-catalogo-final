@@ -17,6 +17,7 @@
 
   /* Fundo por categoria: chave = nome da categoria, valor = caminho da imagem */
   var CATEGORY_BACKGROUNDS = {
+    "Camisas de Seleção": "img/bg-camisas-de-selecao.jpg",
     "Camisas de Clube": "img/bg-camisas-de-clube.jpg",
   };
 
