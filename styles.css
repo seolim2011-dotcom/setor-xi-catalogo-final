@@ -282,6 +282,17 @@ a {
 .card__price--contact {
   color: var(--accent);
   font-size: var(--step0);
+  align-self: flex-start;
+  border-bottom: 1px solid transparent;
+  transition: border-color 0.15s;
+}
+
+.card__price--contact::after {
+  content: " →";
+}
+
+.card__price--contact:hover {
+  border-bottom-color: var(--accent);
 }
 
 .grid__empty {
@@ -307,6 +318,23 @@ a {
   height: 40px;
   width: auto;
   display: block;
+}
+
+.site-footer__contact {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 20px;
+}
+
+.site-footer__contact a {
+  font-size: var(--step0);
+  color: var(--white);
+  padding: 6px 0;
+  transition: color 0.15s;
+}
+
+.site-footer__contact a:hover {
+  color: var(--accent);
 }
 
 .site-footer__meta {

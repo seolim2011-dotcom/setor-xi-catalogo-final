@@ -254,7 +254,7 @@ window.SETOR_XI_PRODUCTS = [
   {
     id: "personalizada-torcedor",
     name: "Camisa Personalizada",
-    category: "Personalizada",
+    category: "Entre em contato",
     price: null,
     number: "12",
     image: null,

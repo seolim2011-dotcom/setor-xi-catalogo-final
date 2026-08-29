@@ -19,6 +19,8 @@
     currency: "BRL",
   });
 
+  var WHATSAPP_URL = "https://wa.me/5545991271005";
+
   var activeCategory = "Todos";
 
   /* --- Placeholder da marca: textura de listras + faixa diagonal --- */
@@ -178,15 +180,27 @@
     name.className = "card__name";
     name.textContent = product.name;
 
-    var price = document.createElement("p");
-    price.className = "card__price";
+    var price;
     if (typeof product.price === "number") {
+      price = document.createElement("p");
+      price.className = "card__price";
       price.textContent = BRL.format(product.price);
     } else if (typeof product.price === "string" && product.price.trim()) {
+      price = document.createElement("p");
+      price.className = "card__price";
       price.textContent = product.price;
     } else {
-      price.textContent = "Entrar em contato";
-      price.classList.add("card__price--contact");
+      price = document.createElement("a");
+      price.className = "card__price card__price--contact";
+      price.href =
+        WHATSAPP_URL +
+        "?text=" +
+        encodeURIComponent(
+          "Olá! Tenho interesse na " + product.name + " (Setor XI)."
+        );
+      price.target = "_blank";
+      price.rel = "noopener";
+      price.textContent = "Falar no WhatsApp";
     }
 
     body.appendChild(category);
