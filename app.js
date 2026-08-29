@@ -20,6 +20,8 @@
   });
 
   var WHATSAPP_URL = "https://wa.me/5545991271005";
+  var INSTAGRAM_URL = "https://instagram.com/setorxi";
+  var CONTACT_CATEGORY = "Entre em contato";
 
   var activeCategory = "Todos";
 
@@ -65,6 +67,9 @@
         categories.push(product.category);
       }
     });
+    if (categories.indexOf(CONTACT_CATEGORY) === -1) {
+      categories.push(CONTACT_CATEGORY);
+    }
 
     filtersEl.innerHTML = "";
     categories.forEach(function (category) {
@@ -110,8 +115,55 @@
     }, 160);
   }
 
+  /* --- Painel de contato (aba "Entre em contato") --- */
+  function renderContact() {
+    if (countEl) countEl.textContent = "";
+    gridEl.innerHTML = "";
+
+    var panel = document.createElement("div");
+    panel.className = "contact-panel";
+
+    var title = document.createElement("h2");
+    title.className = "contact-panel__title";
+    title.textContent = "Camisas personalizadas e pedidos especiais";
+
+    var text = document.createElement("p");
+    text.className = "contact-panel__text";
+    text.textContent =
+      "Feitos sob encomenda. Chama a gente no Instagram ou no WhatsApp.";
+
+    var actions = document.createElement("div");
+    actions.className = "contact-panel__actions";
+
+    var ig = document.createElement("a");
+    ig.className = "contact-btn contact-btn--primary";
+    ig.href = INSTAGRAM_URL;
+    ig.target = "_blank";
+    ig.rel = "noopener";
+    ig.textContent = "Ver no Instagram · @setorxi";
+
+    var wa = document.createElement("a");
+    wa.className = "contact-btn";
+    wa.href = WHATSAPP_URL;
+    wa.target = "_blank";
+    wa.rel = "noopener";
+    wa.textContent = "WhatsApp (45) 99127-1005";
+
+    actions.appendChild(ig);
+    actions.appendChild(wa);
+    panel.appendChild(title);
+    panel.appendChild(text);
+    panel.appendChild(actions);
+    gridEl.appendChild(panel);
+  }
+
   /* --- Grade de produtos --- */
   function renderGrid(animate) {
+    if (activeCategory === CONTACT_CATEGORY) {
+      renderContact();
+      return;
+    }
+
     var visible = products.filter(function (product) {
       return activeCategory === "Todos" || product.category === activeCategory;
     });

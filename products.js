@@ -251,13 +251,4 @@ window.SETOR_XI_PRODUCTS = [
     image: "fotos/retro-japao-2006.jpg",
     badge: null,
   },
-  {
-    id: "personalizada-torcedor",
-    name: "Camisa Personalizada",
-    category: "Entre em contato",
-    price: null,
-    number: "12",
-    image: null,
-    badge: "Sob encomenda",
-  },
 ];

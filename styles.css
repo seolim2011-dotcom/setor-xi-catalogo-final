@@ -300,6 +300,70 @@ a {
   padding: 48px 0;
 }
 
+/* ---------- Painel de contato ---------- */
+
+.contact-panel {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  padding: 56px 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.contact-panel__title {
+  margin: 0;
+  font-size: clamp(1.4rem, 3vw, 1.9rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  max-width: 22ch;
+}
+
+.contact-panel__text {
+  margin: 0;
+  color: var(--muted);
+  max-width: 44ch;
+}
+
+.contact-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.contact-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 12px 22px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: var(--step0);
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.contact-btn:hover {
+  border-color: var(--muted);
+}
+
+.contact-btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.contact-btn--primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
 /* ---------- Footer ---------- */
 
 .site-footer {

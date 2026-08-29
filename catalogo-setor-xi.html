@@ -309,6 +309,70 @@ a {
   padding: 48px 0;
 }
 
+/* ---------- Painel de contato ---------- */
+
+.contact-panel {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  text-align: center;
+  padding: 56px 28px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+}
+
+.contact-panel__title {
+  margin: 0;
+  font-size: clamp(1.4rem, 3vw, 1.9rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  max-width: 22ch;
+}
+
+.contact-panel__text {
+  margin: 0;
+  color: var(--muted);
+  max-width: 44ch;
+}
+
+.contact-panel__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.contact-btn {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  padding: 12px 22px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  font-weight: 700;
+  font-size: var(--step0);
+  transition: border-color 0.15s, background 0.15s, color 0.15s;
+}
+
+.contact-btn:hover {
+  border-color: var(--muted);
+}
+
+.contact-btn--primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: var(--accent-ink);
+}
+
+.contact-btn--primary:hover {
+  background: var(--accent-hover);
+  border-color: var(--accent-hover);
+}
+
 /* ---------- Footer ---------- */
 
 .site-footer {
@@ -736,15 +800,6 @@ window.SETOR_XI_PRODUCTS = [
     image: "fotos/retro-japao-2006.jpg",
     badge: null,
   },
-  {
-    id: "personalizada-torcedor",
-    name: "Camisa Personalizada",
-    category: "Entre em contato",
-    price: null,
-    number: "12",
-    image: null,
-    badge: "Sob encomenda",
-  },
 ];
 
 
@@ -770,6 +825,8 @@ window.SETOR_XI_PRODUCTS = [
   });
 
   var WHATSAPP_URL = "https://wa.me/5545991271005";
+  var INSTAGRAM_URL = "https://instagram.com/setorxi";
+  var CONTACT_CATEGORY = "Entre em contato";
 
   var activeCategory = "Todos";
 
@@ -815,6 +872,9 @@ window.SETOR_XI_PRODUCTS = [
         categories.push(product.category);
       }
     });
+    if (categories.indexOf(CONTACT_CATEGORY) === -1) {
+      categories.push(CONTACT_CATEGORY);
+    }
 
     filtersEl.innerHTML = "";
     categories.forEach(function (category) {
@@ -860,8 +920,55 @@ window.SETOR_XI_PRODUCTS = [
     }, 160);
   }
 
+  /* --- Painel de contato (aba "Entre em contato") --- */
+  function renderContact() {
+    if (countEl) countEl.textContent = "";
+    gridEl.innerHTML = "";
+
+    var panel = document.createElement("div");
+    panel.className = "contact-panel";
+
+    var title = document.createElement("h2");
+    title.className = "contact-panel__title";
+    title.textContent = "Camisas personalizadas e pedidos especiais";
+
+    var text = document.createElement("p");
+    text.className = "contact-panel__text";
+    text.textContent =
+      "Feitos sob encomenda. Chama a gente no Instagram ou no WhatsApp.";
+
+    var actions = document.createElement("div");
+    actions.className = "contact-panel__actions";
+
+    var ig = document.createElement("a");
+    ig.className = "contact-btn contact-btn--primary";
+    ig.href = INSTAGRAM_URL;
+    ig.target = "_blank";
+    ig.rel = "noopener";
+    ig.textContent = "Ver no Instagram · @setorxi";
+
+    var wa = document.createElement("a");
+    wa.className = "contact-btn";
+    wa.href = WHATSAPP_URL;
+    wa.target = "_blank";
+    wa.rel = "noopener";
+    wa.textContent = "WhatsApp (45) 99127-1005";
+
+    actions.appendChild(ig);
+    actions.appendChild(wa);
+    panel.appendChild(title);
+    panel.appendChild(text);
+    panel.appendChild(actions);
+    gridEl.appendChild(panel);
+  }
+
   /* --- Grade de produtos --- */
   function renderGrid(animate) {
+    if (activeCategory === CONTACT_CATEGORY) {
+      renderContact();
+      return;
+    }
+
     var visible = products.filter(function (product) {
       return activeCategory === "Todos" || product.category === activeCategory;
     });
