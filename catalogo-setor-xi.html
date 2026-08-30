@@ -1301,6 +1301,14 @@ window.SETOR_XI_PRODUCTS = [
       return activeCategory === "Todos" || product.category === activeCategory;
     });
 
+    // sempre em ordem alfabética pelo nome
+    visible.sort(function (a, b) {
+      return a.name.localeCompare(b.name, "pt-BR", {
+        numeric: true,
+        sensitivity: "base",
+      });
+    });
+
     if (countEl) {
       countEl.textContent =
         visible.length === 1 ? "1 modelo" : visible.length + " modelos";
