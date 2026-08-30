@@ -63,15 +63,26 @@ a {
   position: fixed;
   inset: 0;
   z-index: -1;
-  background-repeat: no-repeat;
-  background-size: cover;
-  background-position: center 12%;
   opacity: 0;
   transition: opacity 0.45s ease;
   pointer-events: none;
 }
 
 .category-bg.is-visible {
+  opacity: 1;
+}
+
+.category-bg__layer {
+  position: absolute;
+  inset: 0;
+  background-repeat: no-repeat;
+  background-size: cover;
+  background-position: center 12%;
+  opacity: 0;
+  transition: opacity 1s ease;
+}
+
+.category-bg__layer.is-top {
   opacity: 1;
 }
 
@@ -473,7 +484,8 @@ main,
     transition: none;
   }
 
-  .category-bg {
+  .category-bg,
+  .category-bg__layer {
     transition: none;
   }
 }

@@ -14,12 +14,20 @@
   var filtersEl = document.getElementById("filters");
   var countEl = document.getElementById("result-count");
   var bgEl = document.querySelector(".category-bg");
+  var bgLayers = bgEl ? bgEl.querySelectorAll(".category-bg__layer") : [];
 
-  /* Fundo por categoria: chave = nome da categoria, valor = caminho da imagem */
+  /* Fundo por categoria: valor = caminho da imagem, ou lista de imagens
+     que alternam entre si (slideshow) enquanto a aba estiver ativa. */
   var CATEGORY_BACKGROUNDS = {
-    "Camisas de Seleção": "img/bg-camisas-de-selecao.jpg",
+    "Camisas de Seleção": [
+      "img/bg-selecao-brasil.jpg",
+      "img/bg-selecao-espanha.jpg",
+      "img/bg-selecao-argentina.jpg",
+    ],
     "Camisas de Clube": "img/bg-camisas-de-clube.jpg",
   };
+
+  var BG_ROTATE_MS = 7000;
 
   var BRL = new Intl.NumberFormat("pt-BR", {
     style: "currency",
@@ -110,16 +118,52 @@
     typeof window.matchMedia === "function" &&
     window.matchMedia("(prefers-reduced-motion: reduce)").matches;
 
-  /* --- Fundo da categoria ativa --- */
+  /* --- Fundo da categoria ativa (com slideshow opcional) --- */
+  var bgTimer = null;
+  var bgTop = 0;
+
+  function stopBgRotation() {
+    if (bgTimer) {
+      window.clearInterval(bgTimer);
+      bgTimer = null;
+    }
+  }
+
   function updateBackground() {
     if (!bgEl) return;
-    var src = CATEGORY_BACKGROUNDS[activeCategory];
-    if (src) {
-      bgEl.style.backgroundImage = 'url("' + src + '")';
-      bgEl.classList.add("is-visible");
-    } else {
+    stopBgRotation();
+
+    var entry = CATEGORY_BACKGROUNDS[activeCategory];
+    if (!entry) {
       bgEl.classList.remove("is-visible");
+      return;
     }
+
+    var imgs = typeof entry === "string" ? [entry] : entry;
+
+    bgTop = 0;
+    bgLayers[0].style.backgroundImage = 'url("' + imgs[0] + '")';
+    bgLayers[0].classList.add("is-top");
+    bgLayers[1].classList.remove("is-top");
+    bgEl.classList.add("is-visible");
+
+    if (imgs.length < 2 || prefersReducedMotion) return;
+
+    imgs.forEach(function (src) {
+      var pre = new Image();
+      pre.src = src;
+    });
+
+    var idx = 0;
+    bgTimer = window.setInterval(function () {
+      idx = (idx + 1) % imgs.length;
+      var back = bgTop === 0 ? 1 : 0;
+      bgLayers[back].style.backgroundImage = 'url("' + imgs[idx] + '")';
+      void bgLayers[back].offsetWidth;
+      bgLayers[back].classList.add("is-top");
+      bgLayers[bgTop].classList.remove("is-top");
+      bgTop = back;
+    }, BG_ROTATE_MS);
   }
 
   /* --- Troca de categoria com transição (sai -> entra escalonado) --- */
