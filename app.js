@@ -274,6 +274,23 @@
     });
   }
 
+  /* Define a imagem do card com versão pequena (mobile) + grande via srcset.
+     No arquivo único (bundle) esta função é trocada por uma que resolve as
+     imagens embutidas em base64. */
+  function setCardImage(img, product) {
+    if (!product.image) {
+      img.src = placeholderImage(product);
+      return;
+    }
+    img.src = product.image;
+    img.srcset =
+      product.image.replace("fotos/", "fotos/sm/") +
+      " 460w, " +
+      product.image +
+      " 900w";
+    img.sizes = "(max-width: 560px) 46vw, (max-width: 960px) 31vw, 260px";
+  }
+
   function createCard(product) {
     var card = document.createElement("article");
     card.className = "card";
@@ -282,9 +299,10 @@
     media.className = "card__media";
 
     var img = document.createElement("img");
-    img.src = product.image || placeholderImage(product);
     img.alt = "Camisa " + product.name;
     img.loading = "lazy";
+    img.decoding = "async";
+    setCardImage(img, product);
     media.appendChild(img);
 
     if (product.badge) {
@@ -335,6 +353,14 @@
     card.appendChild(media);
     card.appendChild(body);
     return card;
+  }
+
+  /* Pausa o movimento do fundo quando a aba do navegador não está visível
+     (economiza bateria no celular). */
+  if (bgEl && !prefersReducedMotion) {
+    document.addEventListener("visibilitychange", function () {
+      bgEl.classList.toggle("is-paused", document.hidden);
+    });
   }
 
   /* --- Início --- */

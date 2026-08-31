@@ -5,7 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Catálogo Setor XI</title>
   <meta name="description" content="O manto que representa a sua torcida. Camisas de seleções, clubes, clássicos retrô e edições especiais. Vista o Jogo. Viva o Esporte." />
-  <link rel="icon" href="img/logo-reverse.png" />
+  <link rel="icon" href="img/logo-reverse-sm.png" />
+  <link rel="preload" as="image" href="img/logo-reverse-sm.png" />
 
   <meta property="og:type" content="website" />
   <meta property="og:site_name" content="Setor XI" />
@@ -31,13 +32,28 @@
   <header class="site-header">
     <div class="container site-header__inner">
       <a class="brand" href="#" aria-label="Setor XI — Vista o Jogo, Viva o Esporte">
-        <img class="brand__logo" src="img/logo-reverse.png" alt="Setor XI" width="640" height="594" />
+        <img class="brand__logo" src="img/logo-reverse-sm.png" alt="Setor XI" width="215" height="200" />
       </a>
       <span class="site-header__tag">Catálogo 2026</span>
     </div>
   </header>
 
-  <nav class="catalog-nav" aria-label="Categorias">
+  <section class="hero">
+    <div class="container hero__inner">
+      <p class="hero__kicker">Setor XI — direto da arquibancada</p>
+      <h1 class="hero__title"><span>Vista</span><span>o Jogo</span></h1>
+      <p class="hero__lead">
+        O manto que representa a sua torcida. Seleções, clubes, clássicos
+        retrô e edições especiais.
+      </p>
+      <a class="hero__cta" href="#catalogo">Ver o catálogo</a>
+    </div>
+    <a class="hero__scroll" href="#catalogo" aria-label="Ir para o catálogo">
+      <span aria-hidden="true">&#8595;</span>
+    </a>
+  </section>
+
+  <nav class="catalog-nav" id="catalogo" aria-label="Categorias">
     <div class="container catalog-nav__inner">
       <div class="filters" id="filters" role="group" aria-label="Filtrar por categoria"></div>
       <p class="catalog-nav__count" id="result-count"></p>
@@ -45,21 +61,18 @@
   </nav>
 
   <main class="container">
-    <section class="intro">
-      <p class="intro__eyebrow">Coleção</p>
-      <h1 class="intro__title">Camisas Setor XI</h1>
-      <p class="intro__text">
-        O manto que representa a sua torcida. Seleções, clubes, clássicos
-        retrô e edições especiais — escolha o seu e vista o jogo.
-      </p>
-    </section>
-
     <section class="grid" id="product-grid" aria-live="polite"></section>
+    <noscript>
+      <p style="padding: 40px 0; color: #9a9a9a">
+        Ative o JavaScript para ver o catálogo. Ou fale com a gente:
+        <a href="https://instagram.com/setorxi" style="color: #1fdd6d">@setorxi</a>.
+      </p>
+    </noscript>
   </main>
 
   <footer class="site-footer">
     <div class="container site-footer__inner">
-      <img class="site-footer__logo" src="img/logo-reverse.png" alt="Setor XI" width="640" height="594" />
+      <img class="site-footer__logo" src="img/logo-reverse-sm.png" alt="Setor XI" width="215" height="200" />
       <nav class="site-footer__contact" aria-label="Contato">
         <a href="https://instagram.com/setorxi" target="_blank" rel="noopener">@setorxi</a>
         <a href="https://wa.me/5545991271005" target="_blank" rel="noopener">WhatsApp (45) 99127-1005</a>
