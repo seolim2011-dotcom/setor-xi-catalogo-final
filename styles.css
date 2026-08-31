@@ -80,10 +80,21 @@ a {
   background-position: center 12%;
   opacity: 0;
   transition: opacity 1s ease;
+  animation: bg-drift 30s ease-in-out infinite alternate;
+  will-change: transform;
 }
 
 .category-bg__layer.is-top {
   opacity: 1;
+}
+
+@keyframes bg-drift {
+  from {
+    transform: scale(1.04);
+  }
+  to {
+    transform: scale(1.12) translate(-1.2%, -1%);
+  }
 }
 
 .category-bg::after {
@@ -487,6 +498,7 @@ main,
   .category-bg,
   .category-bg__layer {
     transition: none;
+    animation: none;
   }
 }
 

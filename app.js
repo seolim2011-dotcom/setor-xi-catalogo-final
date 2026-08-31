@@ -19,6 +19,7 @@
   /* Fundo por categoria: valor = caminho da imagem, ou lista de imagens
      que alternam entre si (slideshow) enquanto a aba estiver ativa. */
   var CATEGORY_BACKGROUNDS = {
+    Todos: "img/bg-todos.jpg",
     "Camisas de Seleção": [
       "img/bg-selecao-brasil.jpg",
       "img/bg-selecao-espanha.jpg",
