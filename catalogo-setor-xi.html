@@ -68,10 +68,11 @@ a {
 
 /* ---------- Fundo por categoria ---------- */
 
+/* fica dentro do hero — não passa por trás das camisas */
 .category-bg {
-  position: fixed;
+  position: absolute;
   inset: 0;
-  z-index: -1;
+  z-index: 0;
   opacity: 0;
   transition: opacity 0.45s ease;
   pointer-events: none;
@@ -115,11 +116,17 @@ a {
   position: absolute;
   inset: 0;
   background: linear-gradient(
-    180deg,
-    rgba(10, 10, 10, 0.93) 0%,
-    rgba(10, 10, 10, 0.86) 40%,
-    rgba(10, 10, 10, 0.92) 100%
-  );
+      90deg,
+      rgba(10, 10, 10, 0.86) 0%,
+      rgba(10, 10, 10, 0.5) 52%,
+      rgba(10, 10, 10, 0.22) 100%
+    ),
+    linear-gradient(
+      180deg,
+      rgba(10, 10, 10, 0.5) 0%,
+      rgba(10, 10, 10, 0.28) 45%,
+      rgba(10, 10, 10, 0.9) 100%
+    );
 }
 
 .site-header,
@@ -174,25 +181,15 @@ main,
 /* ---------- Hero ---------- */
 
 .hero {
+  position: relative;
+  overflow: hidden;
   min-height: 68vh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding: 76px 0 88px;
   border-bottom: 1px solid var(--border);
-}
-
-.hero::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(
-    90deg,
-    rgba(10, 10, 10, 0.82) 0%,
-    rgba(10, 10, 10, 0.45) 55%,
-    rgba(10, 10, 10, 0.15) 100%
-  );
-  pointer-events: none;
+  background: var(--black);
 }
 
 .hero__inner {
@@ -809,11 +806,6 @@ body.modal-open {
 </head>
 <body>
 
-  <div class="category-bg" aria-hidden="true">
-    <div class="category-bg__layer"></div>
-    <div class="category-bg__layer"></div>
-  </div>
-
   <header class="site-header">
     <div class="container site-header__inner">
       <a class="brand" href="#" aria-label="Setor XI — Vista o Jogo, Viva o Esporte">
@@ -824,6 +816,10 @@ body.modal-open {
   </header>
 
   <section class="hero">
+    <div class="category-bg" aria-hidden="true">
+      <div class="category-bg__layer"></div>
+      <div class="category-bg__layer"></div>
+    </div>
     <div class="container hero__inner">
       <p class="hero__kicker">Setor XI — direto da arquibancada</p>
       <h1 class="hero__title"><span>Vista</span><span>o Jogo</span></h1>
@@ -2439,12 +2435,23 @@ window.SETOR_XI_PRODUCTS = [
     return card;
   }
 
-  /* Pausa o movimento do fundo quando a aba do navegador não está visível
-     (economiza bateria no celular). */
+  /* Pausa o movimento do fundo quando o hero sai da tela (a gente rolou
+     pra ver as camisas) ou quando a aba do navegador não está visível. */
   if (bgEl && !prefersReducedMotion) {
-    document.addEventListener("visibilitychange", function () {
-      bgEl.classList.toggle("is-paused", document.hidden);
-    });
+    var heroVisible = true;
+    var refreshBgPause = function () {
+      bgEl.classList.toggle("is-paused", document.hidden || !heroVisible);
+    };
+    document.addEventListener("visibilitychange", refreshBgPause);
+    if ("IntersectionObserver" in window) {
+      var heroEl = document.querySelector(".hero");
+      if (heroEl) {
+        new IntersectionObserver(function (entries) {
+          heroVisible = entries[0].isIntersecting;
+          refreshBgPause();
+        }).observe(heroEl);
+      }
+    }
   }
 
   /* --- Início --- */

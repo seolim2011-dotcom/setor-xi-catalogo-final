@@ -452,12 +452,23 @@
     return card;
   }
 
-  /* Pausa o movimento do fundo quando a aba do navegador não está visível
-     (economiza bateria no celular). */
+  /* Pausa o movimento do fundo quando o hero sai da tela (a gente rolou
+     pra ver as camisas) ou quando a aba do navegador não está visível. */
   if (bgEl && !prefersReducedMotion) {
-    document.addEventListener("visibilitychange", function () {
-      bgEl.classList.toggle("is-paused", document.hidden);
-    });
+    var heroVisible = true;
+    var refreshBgPause = function () {
+      bgEl.classList.toggle("is-paused", document.hidden || !heroVisible);
+    };
+    document.addEventListener("visibilitychange", refreshBgPause);
+    if ("IntersectionObserver" in window) {
+      var heroEl = document.querySelector(".hero");
+      if (heroEl) {
+        new IntersectionObserver(function (entries) {
+          heroVisible = entries[0].isIntersecting;
+          refreshBgPause();
+        }).observe(heroEl);
+      }
+    }
   }
 
   /* --- Início --- */
