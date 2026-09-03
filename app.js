@@ -471,6 +471,33 @@
     }
   }
 
+  /* --- Hero como porta de entrada: trava o scroll até "Ver o catálogo" --- */
+  var heroEnter = document.querySelector(".hero");
+  if (heroEnter && !location.hash) {
+    document.documentElement.classList.add("hero-locked");
+    document.body.classList.add("hero-locked");
+  }
+
+  function enterCatalog(e) {
+    if (e) e.preventDefault();
+    document.documentElement.classList.remove("hero-locked");
+    document.body.classList.remove("hero-locked");
+    var target = document.getElementById("catalogo");
+    // espera o scroll destravar antes de rolar
+    window.requestAnimationFrame(function () {
+      if (target && target.scrollIntoView) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        window.location.hash = "catalogo";
+      }
+    });
+  }
+
+  var enterLinks = document.querySelectorAll('a[href="#catalogo"]');
+  enterLinks.forEach(function (a) {
+    a.addEventListener("click", enterCatalog);
+  });
+
   /* --- Início --- */
   if (!gridEl || !filtersEl) return;
   buildFilters();

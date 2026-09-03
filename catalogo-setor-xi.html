@@ -183,13 +183,21 @@ main,
 .hero {
   position: relative;
   overflow: hidden;
-  min-height: 68vh;
+  min-height: 100vh;
+  min-height: 100dvh;
   display: flex;
   flex-direction: column;
   justify-content: center;
   padding: 76px 0 88px;
   border-bottom: 1px solid var(--border);
   background: var(--black);
+}
+
+/* "porta de entrada": scroll travado até clicar em "Ver o catálogo" */
+html.hero-locked,
+body.hero-locked {
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 
 .hero__inner {
@@ -770,7 +778,6 @@ body.modal-open {
 
 @media (max-width: 640px) {
   .hero {
-    min-height: 62vh;
     padding: 48px 0 64px;
   }
 
@@ -2453,6 +2460,33 @@ window.SETOR_XI_PRODUCTS = [
       }
     }
   }
+
+  /* --- Hero como porta de entrada: trava o scroll até "Ver o catálogo" --- */
+  var heroEnter = document.querySelector(".hero");
+  if (heroEnter && !location.hash) {
+    document.documentElement.classList.add("hero-locked");
+    document.body.classList.add("hero-locked");
+  }
+
+  function enterCatalog(e) {
+    if (e) e.preventDefault();
+    document.documentElement.classList.remove("hero-locked");
+    document.body.classList.remove("hero-locked");
+    var target = document.getElementById("catalogo");
+    // espera o scroll destravar antes de rolar
+    window.requestAnimationFrame(function () {
+      if (target && target.scrollIntoView) {
+        target.scrollIntoView({ behavior: "smooth", block: "start" });
+      } else {
+        window.location.hash = "catalogo";
+      }
+    });
+  }
+
+  var enterLinks = document.querySelectorAll('a[href="#catalogo"]');
+  enterLinks.forEach(function (a) {
+    a.addEventListener("click", enterCatalog);
+  });
 
   /* --- Início --- */
   if (!gridEl || !filtersEl) return;
