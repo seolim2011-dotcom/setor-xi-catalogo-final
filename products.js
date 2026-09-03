@@ -495,14 +495,6 @@ window.SETOR_XI_PRODUCTS = [
     badge: null,
   },
   {
-    id: "retro-inter-1998-99",
-    name: "Inter de Milão 1998/99",
-    category: "Retrô",
-    price: 200,
-    image: "fotos/retro-inter-1998-99.jpg",
-    badge: null,
-  },
-  {
     id: "retro-roma-2000-01",
     name: "Roma 2000/01 — Fora",
     category: "Retrô",
@@ -516,14 +508,6 @@ window.SETOR_XI_PRODUCTS = [
     category: "Retrô",
     price: 200,
     image: "fotos/retro-gremio-anos-90.jpg",
-    badge: null,
-  },
-  {
-    id: "retro-japao-2006",
-    name: "Japão 2006",
-    category: "Retrô",
-    price: 200,
-    image: "fotos/retro-japao-2006.jpg",
     badge: null,
   },
   {
