@@ -75,6 +75,85 @@
     });
   }
 
+  /* --- Telinha do produto (foto + história + WhatsApp) --- */
+  var STORY_FALLBACK =
+    "Peça da coleção Setor XI. Chama no WhatsApp pra ver tecido, tamanhos disponíveis e opções de personalização.";
+  var lastFocused = null;
+
+  var modal = buildModal();
+
+  function buildModal() {
+    var root = document.createElement("div");
+    root.className = "modal";
+    root.hidden = true;
+    root.setAttribute("role", "dialog");
+    root.setAttribute("aria-modal", "true");
+    root.setAttribute("aria-labelledby", "modal-name");
+    root.innerHTML =
+      '<div class="modal__backdrop" data-close></div>' +
+      '<div class="modal__dialog">' +
+      '<button type="button" class="modal__close" data-close aria-label="Fechar">&times;</button>' +
+      '<div class="modal__media"><img alt="" decoding="async" /></div>' +
+      '<div class="modal__body">' +
+      '<span class="modal__category"></span>' +
+      '<h2 class="modal__name" id="modal-name"></h2>' +
+      '<p class="modal__price"></p>' +
+      '<p class="modal__story"></p>' +
+      '<a class="modal__cta" target="_blank" rel="noopener">Falar no WhatsApp</a>' +
+      "</div>" +
+      "</div>";
+    document.body.appendChild(root);
+
+    root.addEventListener("click", function (e) {
+      if (e.target.closest("[data-close]")) closeProduct();
+    });
+
+    return {
+      root: root,
+      img: root.querySelector(".modal__media img"),
+      category: root.querySelector(".modal__category"),
+      name: root.querySelector(".modal__name"),
+      price: root.querySelector(".modal__price"),
+      story: root.querySelector(".modal__story"),
+      cta: root.querySelector(".modal__cta"),
+      close: root.querySelector(".modal__close"),
+    };
+  }
+
+  function openProduct(product) {
+    modal.img.src = imageUrl(product);
+    modal.img.alt = "Camisa " + product.name;
+    modal.category.textContent = product.category;
+    modal.name.textContent = product.name;
+    if (typeof product.price === "number") {
+      modal.price.textContent = BRL.format(product.price);
+    } else if (typeof product.price === "string" && product.price.trim()) {
+      modal.price.textContent = product.price;
+    } else {
+      modal.price.textContent = "Preço a combinar";
+    }
+    modal.story.textContent = product.story || STORY_FALLBACK;
+    modal.cta.href =
+      WHATSAPP_URL +
+      "?text=" +
+      encodeURIComponent("Olá! Tenho interesse na " + product.name + " (Setor XI).");
+
+    lastFocused = document.activeElement;
+    modal.root.hidden = false;
+    document.body.classList.add("modal-open");
+    modal.close.focus();
+  }
+
+  function closeProduct() {
+    modal.root.hidden = true;
+    document.body.classList.remove("modal-open");
+    if (lastFocused && lastFocused.focus) lastFocused.focus();
+  }
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !modal.root.hidden) closeProduct();
+  });
+
   /* --- Filtros de categoria --- */
   function buildFilters() {
     var categories = ["Todos"];
@@ -274,21 +353,24 @@
     });
   }
 
-  /* Define a imagem do card com versão pequena (mobile) + grande via srcset.
-     No arquivo único (bundle) esta função é trocada por uma que resolve as
-     imagens embutidas em base64. */
+  /* Resolve o caminho da imagem. No arquivo único (bundle) esta função é
+     trocada por uma que devolve a imagem embutida em base64. */
+  function imageUrl(product) {
+    return product.image || placeholderImage(product);
+  }
+
+  /* Card: versão pequena (mobile) + grande via srcset. No bundle, o srcset
+     é removido (só a imagem embutida). */
   function setCardImage(img, product) {
-    if (!product.image) {
-      img.src = placeholderImage(product);
-      return;
+    img.src = imageUrl(product);
+    if (product.image) {
+      img.srcset =
+        product.image.replace("fotos/", "fotos/sm/") +
+        " 460w, " +
+        product.image +
+        " 900w";
+      img.sizes = "(max-width: 560px) 46vw, (max-width: 960px) 31vw, 260px";
     }
-    img.src = product.image;
-    img.srcset =
-      product.image.replace("fotos/", "fotos/sm/") +
-      " 460w, " +
-      product.image +
-      " 900w";
-    img.sizes = "(max-width: 560px) 46vw, (max-width: 960px) 31vw, 260px";
   }
 
   function createCard(product) {
@@ -352,6 +434,21 @@
 
     card.appendChild(media);
     card.appendChild(body);
+
+    card.tabIndex = 0;
+    card.setAttribute("role", "button");
+    card.setAttribute("aria-label", product.name + " — ver detalhes");
+    card.addEventListener("click", function (e) {
+      if (e.target.closest("a")) return; // deixa o link interno funcionar
+      openProduct(product);
+    });
+    card.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        openProduct(product);
+      }
+    });
+
     return card;
   }
 

@@ -14,6 +14,9 @@
  *   image     string   caminho da foto real, ex.: "fotos/belgica.jpg"
  *                       deixe null para usar o placeholder gerado pela marca
  *   badge     string   selo opcional no card, ex.: "Novo" (use null se não quiser)
+ *   story     string   (opcional) pequena história da camisa, exibida na
+ *                       telinha que abre ao clicar. Sem story, aparece um
+ *                       texto padrão convidando a chamar no WhatsApp.
  * ------------------------------------------------------------------
  */
 window.SETOR_XI_PRODUCTS = [
@@ -463,6 +466,8 @@ window.SETOR_XI_PRODUCTS = [
     category: "Retrô",
     price: 200,
     image: "fotos/retro-barcelona-centenario.jpg",
+    story:
+      "Lançada na temporada 1998/99 para marcar os 100 anos do Barcelona: o peito dividido ao meio, metade azul e metade grená, com os anos 1899 e 1999.",
     badge: null,
   },
   {
@@ -543,6 +548,8 @@ window.SETOR_XI_PRODUCTS = [
     category: "Retrô",
     price: 200,
     image: "fotos/retro-alemanha-2014-casa.jpg",
+    story:
+      "O uniforme do tetracampeonato mundial da Alemanha, no Brasil — a Copa marcada pelo 7 a 1 sobre a seleção anfitriã na semifinal.",
     badge: null,
   },
   {
@@ -631,6 +638,8 @@ window.SETOR_XI_PRODUCTS = [
     category: "Retrô",
     price: 200,
     image: "fotos/retro-brasil-1958.jpg",
+    story:
+      "A camisa do primeiro título mundial do Brasil, na Suécia. Foi nessa Copa que um garoto de 17 anos chamado Pelé apareceu para o mundo.",
     badge: null,
   },
   {
@@ -647,6 +656,8 @@ window.SETOR_XI_PRODUCTS = [
     category: "Retrô",
     price: 200,
     image: "fotos/retro-brasil-2002r.jpg",
+    story:
+      "O penta. Ronaldo, Rivaldo e Ronaldinho no Japão e na Coreia — a última Copa do Mundo levantada pela seleção brasileira.",
     badge: null,
   },
   {
@@ -807,6 +818,8 @@ window.SETOR_XI_PRODUCTS = [
     category: "Retrô",
     price: 200,
     image: "fotos/retro-inter-milao-1998r.jpg",
+    story:
+      "A Inter de Milão da época de Ronaldo Fenômeno no auge, com o patrocínio clássico da Pirelli no peito.",
     badge: null,
   },
   {

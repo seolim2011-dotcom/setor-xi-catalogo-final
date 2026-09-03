@@ -380,6 +380,7 @@ main,
   flex-direction: column;
   transition: transform 0.18s ease, border-color 0.18s ease,
     box-shadow 0.18s ease;
+  cursor: pointer;
   /* pula render/layout dos cards fora da tela (grade longa em mobile) */
   content-visibility: auto;
   contain-intrinsic-size: auto 380px;
@@ -533,6 +534,156 @@ main,
   border-color: var(--accent-hover);
 }
 
+/* ---------- Telinha do produto ---------- */
+
+body.modal-open {
+  overflow: hidden;
+}
+
+.modal {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+
+.modal__backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.72);
+}
+
+.modal__dialog {
+  position: relative;
+  z-index: 1;
+  width: min(880px, 100%);
+  max-height: 90vh;
+  overflow-y: auto;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  background: var(--surface);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius);
+  animation: modal-in 0.2s ease both;
+}
+
+@keyframes modal-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+.modal__close {
+  position: absolute;
+  top: 10px;
+  right: 12px;
+  z-index: 2;
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.5);
+  color: var(--white);
+  font-size: 1.6rem;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.modal__close:hover {
+  background: rgba(0, 0, 0, 0.75);
+}
+
+.modal__media {
+  background: var(--surface-2);
+  aspect-ratio: 1 / 1;
+}
+
+.modal__media img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.modal__body {
+  padding: 34px 28px 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.modal__category {
+  font-size: 0.72rem;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--accent);
+}
+
+.modal__name {
+  margin: 0;
+  font-size: clamp(1.4rem, 3vw, 1.95rem);
+  font-weight: 800;
+  letter-spacing: -0.01em;
+}
+
+.modal__price {
+  margin: 0;
+  font-size: var(--step1);
+  font-weight: 700;
+}
+
+.modal__story {
+  margin: 8px 0 0;
+  color: var(--muted);
+  line-height: 1.65;
+}
+
+.modal__cta {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  margin-top: 22px;
+  padding: 13px 28px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  transition: background 0.15s;
+}
+
+.modal__cta:hover {
+  background: var(--accent-hover);
+}
+
+@media (max-width: 620px) {
+  .modal {
+    padding: 0;
+  }
+
+  .modal__dialog {
+    grid-template-columns: 1fr;
+    width: 100%;
+    max-height: 100%;
+    height: 100%;
+    border: none;
+    border-radius: 0;
+  }
+
+  .modal__media {
+    aspect-ratio: 4 / 5;
+  }
+}
+
 /* ---------- Footer ---------- */
 
 .site-footer {
@@ -606,6 +757,10 @@ main,
   }
 
   .hero__scroll span {
+    animation: none;
+  }
+
+  .modal__dialog {
     animation: none;
   }
 }
@@ -849,6 +1004,9 @@ var SETOR_XI_IMAGES = {
  *   image     string   caminho da foto real, ex.: "fotos/belgica.jpg"
  *                       deixe null para usar o placeholder gerado pela marca
  *   badge     string   selo opcional no card, ex.: "Novo" (use null se não quiser)
+ *   story     string   (opcional) pequena história da camisa, exibida na
+ *                       telinha que abre ao clicar. Sem story, aparece um
+ *                       texto padrão convidando a chamar no WhatsApp.
  * ------------------------------------------------------------------
  */
 window.SETOR_XI_PRODUCTS = [
@@ -1298,6 +1456,8 @@ window.SETOR_XI_PRODUCTS = [
     category: "Retrô",
     price: 200,
     image: "fotos/retro-barcelona-centenario.jpg",
+    story:
+      "Lançada na temporada 1998/99 para marcar os 100 anos do Barcelona: o peito dividido ao meio, metade azul e metade grená, com os anos 1899 e 1999.",
     badge: null,
   },
   {
@@ -1378,6 +1538,8 @@ window.SETOR_XI_PRODUCTS = [
     category: "Retrô",
     price: 200,
     image: "fotos/retro-alemanha-2014-casa.jpg",
+    story:
+      "O uniforme do tetracampeonato mundial da Alemanha, no Brasil — a Copa marcada pelo 7 a 1 sobre a seleção anfitriã na semifinal.",
     badge: null,
   },
   {
@@ -1466,6 +1628,8 @@ window.SETOR_XI_PRODUCTS = [
     category: "Retrô",
     price: 200,
     image: "fotos/retro-brasil-1958.jpg",
+    story:
+      "A camisa do primeiro título mundial do Brasil, na Suécia. Foi nessa Copa que um garoto de 17 anos chamado Pelé apareceu para o mundo.",
     badge: null,
   },
   {
@@ -1482,6 +1646,8 @@ window.SETOR_XI_PRODUCTS = [
     category: "Retrô",
     price: 200,
     image: "fotos/retro-brasil-2002r.jpg",
+    story:
+      "O penta. Ronaldo, Rivaldo e Ronaldinho no Japão e na Coreia — a última Copa do Mundo levantada pela seleção brasileira.",
     badge: null,
   },
   {
@@ -1642,6 +1808,8 @@ window.SETOR_XI_PRODUCTS = [
     category: "Retrô",
     price: 200,
     image: "fotos/retro-inter-milao-1998r.jpg",
+    story:
+      "A Inter de Milão da época de Ronaldo Fenômeno no auge, com o patrocínio clássico da Pirelli no peito.",
     badge: null,
   },
   {
@@ -1916,6 +2084,85 @@ window.SETOR_XI_PRODUCTS = [
     });
   }
 
+  /* --- Telinha do produto (foto + história + WhatsApp) --- */
+  var STORY_FALLBACK =
+    "Peça da coleção Setor XI. Chama no WhatsApp pra ver tecido, tamanhos disponíveis e opções de personalização.";
+  var lastFocused = null;
+
+  var modal = buildModal();
+
+  function buildModal() {
+    var root = document.createElement("div");
+    root.className = "modal";
+    root.hidden = true;
+    root.setAttribute("role", "dialog");
+    root.setAttribute("aria-modal", "true");
+    root.setAttribute("aria-labelledby", "modal-name");
+    root.innerHTML =
+      '<div class="modal__backdrop" data-close></div>' +
+      '<div class="modal__dialog">' +
+      '<button type="button" class="modal__close" data-close aria-label="Fechar">&times;</button>' +
+      '<div class="modal__media"><img alt="" decoding="async" /></div>' +
+      '<div class="modal__body">' +
+      '<span class="modal__category"></span>' +
+      '<h2 class="modal__name" id="modal-name"></h2>' +
+      '<p class="modal__price"></p>' +
+      '<p class="modal__story"></p>' +
+      '<a class="modal__cta" target="_blank" rel="noopener">Falar no WhatsApp</a>' +
+      "</div>" +
+      "</div>";
+    document.body.appendChild(root);
+
+    root.addEventListener("click", function (e) {
+      if (e.target.closest("[data-close]")) closeProduct();
+    });
+
+    return {
+      root: root,
+      img: root.querySelector(".modal__media img"),
+      category: root.querySelector(".modal__category"),
+      name: root.querySelector(".modal__name"),
+      price: root.querySelector(".modal__price"),
+      story: root.querySelector(".modal__story"),
+      cta: root.querySelector(".modal__cta"),
+      close: root.querySelector(".modal__close"),
+    };
+  }
+
+  function openProduct(product) {
+    modal.img.src = imageUrl(product);
+    modal.img.alt = "Camisa " + product.name;
+    modal.category.textContent = product.category;
+    modal.name.textContent = product.name;
+    if (typeof product.price === "number") {
+      modal.price.textContent = BRL.format(product.price);
+    } else if (typeof product.price === "string" && product.price.trim()) {
+      modal.price.textContent = product.price;
+    } else {
+      modal.price.textContent = "Preço a combinar";
+    }
+    modal.story.textContent = product.story || STORY_FALLBACK;
+    modal.cta.href =
+      WHATSAPP_URL +
+      "?text=" +
+      encodeURIComponent("Olá! Tenho interesse na " + product.name + " (Setor XI).");
+
+    lastFocused = document.activeElement;
+    modal.root.hidden = false;
+    document.body.classList.add("modal-open");
+    modal.close.focus();
+  }
+
+  function closeProduct() {
+    modal.root.hidden = true;
+    document.body.classList.remove("modal-open");
+    if (lastFocused && lastFocused.focus) lastFocused.focus();
+  }
+
+  document.addEventListener("keydown", function (e) {
+    if (e.key === "Escape" && !modal.root.hidden) closeProduct();
+  });
+
   /* --- Filtros de categoria --- */
   function buildFilters() {
     var categories = ["Todos"];
@@ -2115,11 +2362,16 @@ window.SETOR_XI_PRODUCTS = [
     });
   }
 
-  /* Define a imagem do card com versão pequena (mobile) + grande via srcset.
-     No arquivo único (bundle) esta função é trocada por uma que resolve as
-     imagens embutidas em base64. */
+  /* Resolve o caminho da imagem. No arquivo único (bundle) esta função é
+     trocada por uma que devolve a imagem embutida em base64. */
+  function imageUrl(product) {
+    return SETOR_XI_IMAGES[product.image] || placeholderImage(product);
+  }
+
+  /* Card: versão pequena (mobile) + grande via srcset. No bundle, o srcset
+     é removido (só a imagem embutida). */
   function setCardImage(img, product) {
-    img.src = SETOR_XI_IMAGES[product.image] || placeholderImage(product);
+    img.src = imageUrl(product);
   }
 
   function createCard(product) {
@@ -2183,6 +2435,21 @@ window.SETOR_XI_PRODUCTS = [
 
     card.appendChild(media);
     card.appendChild(body);
+
+    card.tabIndex = 0;
+    card.setAttribute("role", "button");
+    card.setAttribute("aria-label", product.name + " — ver detalhes");
+    card.addEventListener("click", function (e) {
+      if (e.target.closest("a")) return; // deixa o link interno funcionar
+      openProduct(product);
+    });
+    card.addEventListener("keydown", function (e) {
+      if (e.key === "Enter" || e.key === " ") {
+        e.preventDefault();
+        openProduct(product);
+      }
+    });
+
     return card;
   }
 
