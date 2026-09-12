@@ -17,6 +17,14 @@
  *   story     string   (opcional) pequena história da camisa, exibida na
  *                       telinha que abre ao clicar. Sem story, aparece um
  *                       texto padrão convidando a chamar no WhatsApp.
+ *   images    array    (opcional) lista de fotos extras para a telinha,
+ *                       ex.: ["fotos/x-ambiente.jpg", "fotos/x-still2.jpg"].
+ *                       images[0] vira a foto principal (contexto/hero);
+ *                       o resto vira miniaturas clicáveis. A foto de
+ *                       `image` entra automaticamente como still extra
+ *                       no fim da lista, se ainda não estiver nela.
+ *                       Sem `images`, a telinha mostra só `image` — igual
+ *                       a hoje, sem nenhuma galeria.
  * ------------------------------------------------------------------
  */
 window.SETOR_XI_PRODUCTS = [

@@ -530,6 +530,73 @@ body.hero-locked {
   border-color: var(--accent-hover);
 }
 
+.contact-form-wrap {
+  width: 100%;
+  max-width: 420px;
+  margin-top: 24px;
+  padding-top: 24px;
+  border-top: 1px solid var(--border);
+}
+
+.contact-form {
+  margin-top: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  text-align: left;
+}
+
+.contact-form__field {
+  width: 100%;
+  padding: 12px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-sm);
+  color: var(--white);
+  font: inherit;
+}
+
+.contact-form__field::placeholder {
+  color: var(--muted);
+}
+
+.contact-form__field:focus-visible {
+  border-color: var(--accent);
+}
+
+/* campo-armadilha anti-spam (Formspree/Getform) — some visualmente, mas
+   continua alcançável por leitor de tela evitar; robôs preenchem, gente não */
+.contact-form__hp {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  opacity: 0;
+}
+
+.contact-form__submit {
+  width: 100%;
+  justify-content: center;
+  margin-top: 4px;
+  border: none;
+  cursor: pointer;
+}
+
+.contact-form__status {
+  margin: 0;
+  min-height: 1.4em;
+  font-size: var(--step-1);
+  color: var(--muted);
+}
+
+.contact-form__status--ok {
+  color: var(--accent);
+}
+
+.contact-form__status--error {
+  color: #ff8a8a;
+}
+
 /* ---------- Telinha do produto ---------- */
 
 body.modal-open {
@@ -602,15 +669,57 @@ body.modal-open {
 }
 
 .modal__media {
+  position: relative;
   background: var(--surface-2);
   aspect-ratio: 1 / 1;
 }
 
-.modal__media img {
+.modal__media-img {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+}
+
+.modal__thumbs {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  gap: 6px;
+  padding: 8px;
+  background: linear-gradient(to top, rgba(0, 0, 0, 0.55), transparent);
+}
+
+.modal__thumbs[hidden] {
+  display: none;
+}
+
+.modal__thumb {
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: var(--radius-sm);
+  overflow: hidden;
+  cursor: pointer;
+  opacity: 0.65;
+  transition: opacity 0.15s, border-color 0.15s;
+}
+
+.modal__thumb img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.modal__thumb.is-active,
+.modal__thumb:hover {
+  opacity: 1;
+  border-color: var(--accent);
 }
 
 .modal__body {
@@ -644,6 +753,30 @@ body.modal-open {
   margin: 8px 0 0;
   color: var(--muted);
   line-height: 1.65;
+}
+
+/* só entra quando o produto tem uma história de verdade (não o fallback) */
+.modal__story--featured {
+  position: relative;
+  margin: 2px 0 0;
+  padding-left: 22px;
+  color: var(--white);
+  font-size: var(--step1);
+  font-style: italic;
+  line-height: 1.55;
+  border-left: 3px solid var(--accent);
+}
+
+.modal__story--featured::before {
+  content: "\201C";
+  position: absolute;
+  left: 3px;
+  top: -0.1em;
+  font-size: 1.7em;
+  font-style: normal;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--accent);
 }
 
 .modal__cta {
@@ -760,8 +893,10 @@ body.modal-open {
     animation: none;
   }
 
-  .modal__dialog {
+  .modal__dialog,
+  .modal__thumb {
     animation: none;
+    transition: none;
   }
 }
 

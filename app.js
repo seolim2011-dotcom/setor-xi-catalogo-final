@@ -39,6 +39,12 @@
   var INSTAGRAM_URL = "https://instagram.com/setorxi";
   var CONTACT_CATEGORY = "Entre em contato";
 
+  /* TROQUE pelo endpoint real do seu form no Formspree (ou Getform):
+     crie uma conta grátis em formspree.io, crie um form lá, e cole aqui
+     a URL que eles derem (tipo "https://formspree.io/f/xxxxxxx"). Até lá
+     o formulário do site mostra um aviso em vez de tentar enviar. */
+  var CONTACT_FORM_ENDPOINT = "https://formspree.io/f/SEU_FORM_ID";
+
   var activeCategory = "Todos";
 
   /* --- Placeholder da marca: textura de listras + faixa diagonal --- */
@@ -79,6 +85,7 @@
   var STORY_FALLBACK =
     "Peça da coleção Setor XI. Chama no WhatsApp pra ver tecido, tamanhos disponíveis e opções de personalização.";
   var lastFocused = null;
+  var currentGallery = [];
 
   var modal = buildModal();
 
@@ -93,12 +100,15 @@
       '<div class="modal__backdrop" data-close></div>' +
       '<div class="modal__dialog">' +
       '<button type="button" class="modal__close" data-close aria-label="Fechar">&times;</button>' +
-      '<div class="modal__media"><img alt="" decoding="async" /></div>' +
+      '<div class="modal__media">' +
+      '<img class="modal__media-img" alt="" decoding="async" />' +
+      '<div class="modal__thumbs" hidden></div>' +
+      "</div>" +
       '<div class="modal__body">' +
       '<span class="modal__category"></span>' +
       '<h2 class="modal__name" id="modal-name"></h2>' +
-      '<p class="modal__price"></p>' +
       '<p class="modal__story"></p>' +
+      '<p class="modal__price"></p>' +
       '<a class="modal__cta" target="_blank" rel="noopener">Falar no WhatsApp</a>' +
       "</div>" +
       "</div>";
@@ -106,11 +116,14 @@
 
     root.addEventListener("click", function (e) {
       if (e.target.closest("[data-close]")) closeProduct();
+      var thumbBtn = e.target.closest(".modal__thumb");
+      if (thumbBtn) selectGalleryImage(Number(thumbBtn.dataset.index));
     });
 
     return {
       root: root,
-      img: root.querySelector(".modal__media img"),
+      img: root.querySelector(".modal__media-img"),
+      thumbs: root.querySelector(".modal__thumbs"),
       category: root.querySelector(".modal__category"),
       name: root.querySelector(".modal__name"),
       price: root.querySelector(".modal__price"),
@@ -121,10 +134,11 @@
   }
 
   function openProduct(product) {
-    modal.img.src = imageUrl(product);
-    modal.img.alt = "Camisa " + product.name;
+    renderGallery(product);
     modal.category.textContent = product.category;
     modal.name.textContent = product.name;
+    modal.story.textContent = product.story || STORY_FALLBACK;
+    modal.story.classList.toggle("modal__story--featured", Boolean(product.story));
     if (typeof product.price === "number") {
       modal.price.textContent = BRL.format(product.price);
     } else if (typeof product.price === "string" && product.price.trim()) {
@@ -132,7 +146,6 @@
     } else {
       modal.price.textContent = "Preço a combinar";
     }
-    modal.story.textContent = product.story || STORY_FALLBACK;
     modal.cta.href =
       WHATSAPP_URL +
       "?text=" +
@@ -295,10 +308,74 @@
 
     actions.appendChild(ig);
     actions.appendChild(wa);
+
+    var formWrap = document.createElement("div");
+    formWrap.className = "contact-form-wrap";
+
+    var formLead = document.createElement("p");
+    formLead.className = "contact-panel__text";
+    formLead.textContent = "Ou deixa seu contato que a gente te chama:";
+
+    var form = document.createElement("form");
+    form.className = "contact-form";
+    form.innerHTML =
+      '<input class="contact-form__field" type="text" name="nome" placeholder="Seu nome" autocomplete="name" required />' +
+      '<input class="contact-form__field" type="text" name="contato" placeholder="WhatsApp ou @ do Instagram" autocomplete="tel" required />' +
+      '<input class="contact-form__field" type="text" name="interesse" placeholder="Time do coração, bairro ou geração (opcional)" />' +
+      '<input class="contact-form__hp" type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true" />' +
+      '<button type="submit" class="contact-btn contact-btn--primary contact-form__submit">Enviar</button>' +
+      '<p class="contact-form__status" role="status" aria-live="polite"></p>';
+    form.addEventListener("submit", handleContactSubmit);
+
+    formWrap.appendChild(formLead);
+    formWrap.appendChild(form);
+
     panel.appendChild(title);
     panel.appendChild(text);
     panel.appendChild(actions);
+    panel.appendChild(formWrap);
     gridEl.appendChild(panel);
+  }
+
+  /* Envia o formulário de contato pro Formspree/Getform (ver
+     CONTACT_FORM_ENDPOINT lá em cima) e mostra o resultado sem sair da
+     página. O dado fica salvo e filtrável no painel do serviço. */
+  function handleContactSubmit(e) {
+    e.preventDefault();
+    var form = e.target;
+    var statusEl = form.querySelector(".contact-form__status");
+    var submitBtn = form.querySelector(".contact-form__submit");
+
+    if (CONTACT_FORM_ENDPOINT.indexOf("SEU_FORM_ID") !== -1) {
+      statusEl.textContent =
+        "Formulário ainda não conectado — chama a gente pelo WhatsApp por enquanto.";
+      statusEl.className = "contact-form__status contact-form__status--error";
+      return;
+    }
+
+    submitBtn.disabled = true;
+    statusEl.textContent = "Enviando...";
+    statusEl.className = "contact-form__status";
+
+    fetch(CONTACT_FORM_ENDPOINT, {
+      method: "POST",
+      headers: { Accept: "application/json" },
+      body: new FormData(form),
+    })
+      .then(function (response) {
+        if (!response.ok) throw new Error("resposta ruim do formulário");
+        statusEl.textContent = "Recebemos! A gente chama você em breve.";
+        statusEl.className = "contact-form__status contact-form__status--ok";
+        form.reset();
+      })
+      .catch(function () {
+        statusEl.textContent =
+          "Não deu pra enviar agora — chama a gente direto no WhatsApp.";
+        statusEl.className = "contact-form__status contact-form__status--error";
+      })
+      .then(function () {
+        submitBtn.disabled = false;
+      });
   }
 
   /* --- Grade de produtos --- */
@@ -371,6 +448,70 @@
         " 900w";
       img.sizes = "(max-width: 560px) 46vw, (max-width: 960px) 31vw, 260px";
     }
+  }
+
+  /* Resolve um caminho de imagem cru (fotos extras da galeria da telinha).
+     No arquivo único (bundle) esta função é trocada por uma que devolve a
+     imagem embutida em base64 — igual ao que já acontece com imageUrl(). */
+  function imageSrc(path) {
+    return path || "";
+  }
+
+  /* Lista de fotos da telinha de um produto: images[0] é a foto de
+     contexto/hero; o resto são stills. A foto clássica (`image`) entra
+     como still extra se ainda não estiver na lista. Produto sem `images`
+     devolve lista vazia -> a telinha mostra só uma imagem, como hoje. */
+  function productGalleryPaths(product) {
+    var list = Array.isArray(product.images) ? product.images.slice() : [];
+    if (product.image && list.indexOf(product.image) === -1) {
+      list.push(product.image);
+    }
+    return list;
+  }
+
+  /* Monta a imagem (e, se houver 2+ fotos, o rail de miniaturas) da
+     telinha de um produto. */
+  function renderGallery(product) {
+    currentGallery = productGalleryPaths(product);
+    modal.img.alt = "Camisa " + product.name;
+
+    if (currentGallery.length <= 1) {
+      modal.img.src = imageUrl(product);
+      modal.thumbs.hidden = true;
+      modal.thumbs.innerHTML = "";
+      return;
+    }
+
+    modal.img.src = imageSrc(currentGallery[0]);
+    modal.thumbs.innerHTML = "";
+    currentGallery.forEach(function (path, index) {
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "modal__thumb" + (index === 0 ? " is-active" : "");
+      btn.dataset.index = String(index);
+      btn.setAttribute(
+        "aria-label",
+        "Foto " + (index + 1) + " de " + currentGallery.length
+      );
+      var thumbImg = document.createElement("img");
+      thumbImg.src = imageSrc(path);
+      thumbImg.alt = "";
+      thumbImg.loading = "lazy";
+      thumbImg.decoding = "async";
+      btn.appendChild(thumbImg);
+      modal.thumbs.appendChild(btn);
+    });
+    modal.thumbs.hidden = false;
+  }
+
+  function selectGalleryImage(index) {
+    if (!currentGallery.length || index < 0 || index >= currentGallery.length) {
+      return;
+    }
+    modal.img.src = imageSrc(currentGallery[index]);
+    modal.thumbs.querySelectorAll(".modal__thumb").forEach(function (btn, i) {
+      btn.classList.toggle("is-active", i === index);
+    });
   }
 
   function createCard(product) {
