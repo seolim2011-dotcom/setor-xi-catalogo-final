@@ -334,7 +334,7 @@ window.SETOR_XI_PRODUCTS = [
   },
   {
     id: "especial-pais-de-gales-150",
-    name: "País de Gales — Edição 150 Anos",
+    name: "País de Gales — Edição Especial (150 Anos)",
     category: "Edições Especiais",
     price: null,
     image: "fotos/pais-de-gales-150-anos.jpg",
@@ -382,7 +382,7 @@ window.SETOR_XI_PRODUCTS = [
   },
   {
     id: "especial-barcelona-travis-scott",
-    name: "Barcelona 2024/25 — Travis Scott",
+    name: "Barcelona 2024/25 — Edição Especial (Travis Scott)",
     category: "Edições Especiais",
     price: null,
     image: "fotos/barcelona-24-25-travis-scott.jpg",
@@ -398,7 +398,7 @@ window.SETOR_XI_PRODUCTS = [
   },
   {
     id: "especial-ajax-25-26",
-    name: "Ajax 2025/26 — Edição Comemorativa",
+    name: "Ajax 2025/26 — Edição Especial",
     category: "Edições Especiais",
     price: null,
     image: "fotos/especial-ajax-25-26.jpg",
@@ -414,7 +414,7 @@ window.SETOR_XI_PRODUCTS = [
   },
   {
     id: "especial-barcelona-125-anos",
-    name: "Barcelona — 125 Anos",
+    name: "Barcelona — Edição Especial (125 Anos)",
     category: "Edições Especiais",
     price: null,
     image: "fotos/especial-barcelona-125-anos.jpg",
@@ -430,7 +430,7 @@ window.SETOR_XI_PRODUCTS = [
   },
   {
     id: "especial-espanha-grena",
-    name: "Espanha — Edição Especial Grená",
+    name: "Espanha — Edição Especial (Grená)",
     category: "Edições Especiais",
     price: null,
     image: "fotos/especial-espanha-grena.jpg",
@@ -462,7 +462,7 @@ window.SETOR_XI_PRODUCTS = [
   },
   {
     id: "retro-barcelona-centenario",
-    name: "Barcelona — Centenário 1899/1999",
+    name: "Barcelona 1998/99 — Centenário",
     category: "Retrô",
     price: 200,
     image: "fotos/retro-barcelona-centenario.jpg",
@@ -774,7 +774,7 @@ window.SETOR_XI_PRODUCTS = [
   },
   {
     id: "retro-holanda-1988",
-    name: "Holanda 1988",
+    name: "Holanda 1988 — Casa",
     category: "Retrô",
     price: 200,
     image: "fotos/retro-holanda-1988.jpg",
