@@ -1,66 +1,39 @@
 /* ============================================================
    Setor XI — login separado de cliente e de admin, questionário
-   e banco de dados. Usa Firebase Authentication (e-mail/senha) +
-   Firestore, plano Spark (gratuito). Troque FIREBASE_CONFIG abaixo
-   pela config do seu projeto em console.firebase.google.com — sem
-   isso, login e questionário mostram um aviso em vez de travar a
-   página.
+   e banco de dados. Usa Supabase (Auth por e-mail/senha + Postgres
+   com Row Level Security), plano gratuito, sem cartão. Troque
+   SUPABASE_CONFIG abaixo pelos dados do seu projeto em
+   supabase.com — sem isso, login e questionário mostram um aviso
+   em vez de travar a página.
 
    Cliente: modal do cabeçalho ("Entrar"), com aba de criar conta —
    leva à seção #minha-conta.
    Admin: formulário próprio dentro de #admin (sem cadastro; a conta
    já existe, foi criada como cliente e depois marcada como admin
-   manualmente na coleção `admins` do Firestore, pelo console).
-   Os dois usam o mesmo Firebase Auth por baixo (é o mesmo projeto
+   manualmente na tabela `admins`, pelo editor SQL do Supabase).
+   Os dois usam o mesmo projeto Supabase por baixo (é o mesmo banco
    gratuito) mas são fluxos de login completamente separados na tela.
    ============================================================ */
 
-import {
-  initializeApp,
-} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-app.js";
-import {
-  getAuth,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut,
-  onAuthStateChanged,
-} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-auth.js";
-import {
-  getFirestore,
-  doc,
-  getDoc,
-  setDoc,
-  addDoc,
-  collection,
-  query,
-  orderBy,
-  getDocs,
-  serverTimestamp,
-} from "https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore.js";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 (function () {
   "use strict";
 
-  // TROQUE pelos valores do SEU projeto (Configurações do projeto > Geral >
-  // Seus apps > Web, em console.firebase.google.com). Essa config é pública
-  // — a segurança de verdade vem das regras do Firestore, não de escondê-la.
-  var FIREBASE_CONFIG = {
-    apiKey: "SUA_API_KEY",
-    authDomain: "SEU_PROJETO.firebaseapp.com",
-    projectId: "SEU_PROJETO",
-    storageBucket: "SEU_PROJETO.appspot.com",
-    messagingSenderId: "SEU_SENDER_ID",
-    appId: "SEU_APP_ID",
+  // TROQUE pelos valores do SEU projeto (Configurações do projeto >
+  // API, em supabase.com). A anonKey é pública por design — a
+  // segurança de verdade vem das políticas de RLS nas tabelas, não
+  // de esconder essa chave.
+  var SUPABASE_CONFIG = {
+    url: "https://SEUPROJETO.supabase.co",
+    anonKey: "SUA_ANON_KEY",
   };
 
-  var isConfigured = FIREBASE_CONFIG.apiKey.indexOf("SUA_API_KEY") === -1;
+  var isConfigured = SUPABASE_CONFIG.url.indexOf("SEUPROJETO") === -1;
 
-  var app, auth, db;
-  if (isConfigured) {
-    app = initializeApp(FIREBASE_CONFIG);
-    auth = getAuth(app);
-    db = getFirestore(app);
-  }
+  var supabase = isConfigured
+    ? createClient(SUPABASE_CONFIG.url, SUPABASE_CONFIG.anonKey)
+    : null;
 
   var currentUser = null;
   var isAdminUser = false;
@@ -94,13 +67,14 @@ import {
   }
 
   function friendlyAuthError(err) {
+    var msg = (err && err.message) || "";
     var code = (err && err.code) || "";
-    if (code === "auth/email-already-in-use") return "Esse e-mail já tem conta. Tenta entrar em vez de criar.";
-    if (code === "auth/invalid-email") return "E-mail inválido.";
-    if (code === "auth/weak-password") return "Senha muito curta (mínimo 6 caracteres).";
-    if (code === "auth/wrong-password" || code === "auth/invalid-credential") return "E-mail ou senha incorretos.";
-    if (code === "auth/user-not-found") return "Não achei conta com esse e-mail.";
-    if (code === "auth/too-many-requests") return "Muitas tentativas. Espera um pouco e tenta de novo.";
+    if (code === "user_already_exists" || /already registered/i.test(msg)) return "Esse e-mail já tem conta. Tenta entrar em vez de criar.";
+    if (code === "weak_password" || /password should be at least/i.test(msg)) return "Senha muito curta (mínimo 6 caracteres).";
+    if (code === "invalid_credentials" || /invalid login credentials/i.test(msg)) return "E-mail ou senha incorretos.";
+    if (code === "email_not_confirmed" || /email not confirmed/i.test(msg)) return "Confirma seu e-mail antes de entrar (a gente mandou um link).";
+    if (/invalid email|unable to validate email/i.test(msg)) return "E-mail inválido.";
+    if (/rate limit|too many/i.test(msg)) return "Muitas tentativas. Espera um pouco e tenta de novo.";
     return "Não deu certo. Tenta de novo em instantes.";
   }
 
@@ -200,24 +174,32 @@ import {
 
       var task;
       if (authMode === "signup") {
-        task = createUserWithEmailAndPassword(auth, email, senha).then(function (cred) {
-          return setDoc(doc(db, "users", cred.user.uid), {
-            nome: nome,
+        task = supabase.auth
+          .signUp({
             email: email,
-            criadoEm: serverTimestamp(),
+            password: senha,
+            options: { data: { nome: nome } },
+          })
+          .then(function (res) {
+            if (res.error) return res;
+            if (!res.data.session) return { needsConfirmation: true };
+            return res;
           });
-        });
       } else {
-        task = signInWithEmailAndPassword(auth, email, senha);
+        task = supabase.auth.signInWithPassword({ email: email, password: senha });
       }
 
-      task
-        .then(function () {
-          close();
-        })
-        .catch(function (err) {
-          setStatus(refs.status, friendlyAuthError(err), "error");
-        });
+      task.then(function (res) {
+        if (res.error) {
+          setStatus(refs.status, friendlyAuthError(res.error), "error");
+          return;
+        }
+        if (res.needsConfirmation) {
+          setStatus(refs.status, "Conta criada! Confira seu e-mail para confirmar antes de entrar.", "ok");
+          return;
+        }
+        close();
+      });
     });
 
     return { open: open, close: close, setMode: setMode };
@@ -232,12 +214,12 @@ import {
 
   if (logoutBtn) {
     logoutBtn.addEventListener("click", function () {
-      if (auth) signOut(auth);
+      if (supabase) supabase.auth.signOut();
     });
   }
 
   /* ============================================================
-     Estado de login: cabeçalho + acesso ao painel admin
+     Estado de login: cabeçalho
      ============================================================ */
   function updateHeaderUI() {
     if (currentUser) {
@@ -265,10 +247,9 @@ import {
     if (!contaSection) return;
     contaSection.hidden = !currentUser;
     if (!currentUser || !contaInfo) return;
-    var criadoEm =
-      currentUser.metadata && currentUser.metadata.creationTime
-        ? new Date(currentUser.metadata.creationTime).toLocaleDateString("pt-BR")
-        : "";
+    var criadoEm = currentUser.created_at
+      ? new Date(currentUser.created_at).toLocaleDateString("pt-BR")
+      : "";
     contaInfo.textContent =
       (currentUser.displayName || "Cliente Setor XI") +
       " · " +
@@ -278,32 +259,35 @@ import {
 
   if (contaLogoutBtn) {
     contaLogoutBtn.addEventListener("click", function () {
-      if (auth) signOut(auth);
+      if (supabase) supabase.auth.signOut();
     });
   }
 
   function checkIsAdmin(uid) {
-    return getDoc(doc(db, "admins", uid))
-      .then(function (snap) {
-        return snap.exists();
-      })
-      .catch(function () {
-        return false;
+    return supabase
+      .from("admins")
+      .select("user_id")
+      .eq("user_id", uid)
+      .maybeSingle()
+      .then(function (res) {
+        return !res.error && !!res.data;
       });
   }
 
   function fetchUserProfile(uid) {
-    return getDoc(doc(db, "users", uid))
-      .then(function (snap) {
-        return snap.exists() ? snap.data() : null;
-      })
-      .catch(function () {
-        return null;
+    return supabase
+      .from("profiles")
+      .select("nome")
+      .eq("id", uid)
+      .maybeSingle()
+      .then(function (res) {
+        return res.error ? null : res.data;
       });
   }
 
   if (isConfigured) {
-    onAuthStateChanged(auth, function (user) {
+    supabase.auth.onAuthStateChange(function (event, session) {
+      var user = session ? session.user : null;
       currentUser = user;
       if (!user) {
         isAdminUser = false;
@@ -312,10 +296,10 @@ import {
         renderAdminSection();
         return;
       }
-      Promise.all([fetchUserProfile(user.uid), checkIsAdmin(user.uid)]).then(function (results) {
+      Promise.all([fetchUserProfile(user.id), checkIsAdmin(user.id)]).then(function (results) {
         var profile = results[0];
         isAdminUser = results[1];
-        if (profile && profile.nome) currentUser.displayName = profile.nome;
+        currentUser.displayName = profile && profile.nome ? profile.nome : null;
         updateHeaderUI();
         renderContaSection();
         renderAdminSection();
@@ -338,20 +322,22 @@ import {
       var data = {
         nome: form.nome.value.trim(),
         cidade: form.cidade.value.trim(),
-        time: form.time.value.trim(),
-        faixaEtaria: form.faixaEtaria.value,
-        comoConheceu: form.comoConheceu.value,
+        time_coracao: form.time.value.trim(),
+        faixa_etaria: form.faixaEtaria.value,
+        como_conheceu: form.comoConheceu.value,
         resposta: form.resposta.value.trim(),
-        uid: currentUser ? currentUser.uid : null,
-        createdAt: serverTimestamp(),
+        user_id: currentUser ? currentUser.id : null,
       };
-      addDoc(collection(db, "questionnaireResponses"), data)
-        .then(function () {
+      supabase
+        .from("questionnaire_responses")
+        .insert(data)
+        .then(function (res) {
+          if (res.error) {
+            setStatus(questionarioStatus, "Não deu certo. Tenta de novo em instantes.", "error");
+            return;
+          }
           setStatus(questionarioStatus, "Valeu! Resposta enviada.", "ok");
           form.reset();
-        })
-        .catch(function () {
-          setStatus(questionarioStatus, "Não deu certo. Tenta de novo em instantes.", "error");
         });
     });
   }
@@ -359,9 +345,9 @@ import {
   /* ============================================================
      Painel admin
      ============================================================ */
-  function formatDate(ts) {
-    if (!ts || !ts.toDate) return "";
-    return ts.toDate().toLocaleDateString("pt-BR", {
+  function formatDate(iso) {
+    if (!iso) return "";
+    return new Date(iso).toLocaleDateString("pt-BR", {
       day: "2-digit",
       month: "2-digit",
       year: "numeric",
@@ -398,57 +384,61 @@ import {
       var email = adminLoginForm.email.value.trim();
       var senha = adminLoginForm.senha.value;
       setStatus(adminLoginStatus, "Entrando...");
-      signInWithEmailAndPassword(auth, email, senha)
-        .then(function (cred) {
-          return checkIsAdmin(cred.user.uid);
-        })
-        .then(function (admin) {
-          if (!admin) {
-            setStatus(adminLoginStatus, "Essa conta não tem acesso administrativo.", "error");
+      supabase.auth
+        .signInWithPassword({ email: email, password: senha })
+        .then(function (res) {
+          if (res.error) {
+            setStatus(adminLoginStatus, friendlyAuthError(res.error), "error");
             return;
           }
-          adminLoginForm.reset();
-          setStatus(adminLoginStatus, "");
-        })
-        .catch(function (err) {
-          setStatus(adminLoginStatus, friendlyAuthError(err), "error");
+          return checkIsAdmin(res.data.user.id).then(function (admin) {
+            if (!admin) {
+              setStatus(adminLoginStatus, "Essa conta não tem acesso administrativo.", "error");
+              return;
+            }
+            adminLoginForm.reset();
+            setStatus(adminLoginStatus, "");
+          });
         });
     });
   }
 
   if (adminLogoutBtn) {
     adminLogoutBtn.addEventListener("click", function () {
-      if (auth) signOut(auth);
+      if (supabase) supabase.auth.signOut();
     });
   }
 
   function loadResponses() {
     if (!adminTableBody) return;
     setStatus(adminStatus, "Carregando...");
-    var q = query(collection(db, "questionnaireResponses"), orderBy("createdAt", "desc"));
-    getDocs(q)
-      .then(function (snap) {
+    supabase
+      .from("questionnaire_responses")
+      .select("*")
+      .order("created_at", { ascending: false })
+      .then(function (res) {
+        if (res.error) {
+          setStatus(adminStatus, "Erro ao carregar (confira as políticas de RLS).", "error");
+          return;
+        }
+        var rows = res.data || [];
         adminTableBody.innerHTML = "";
-        if (snap.empty) {
+        if (rows.length === 0) {
           setStatus(adminStatus, "Nenhuma resposta ainda.");
           return;
         }
-        setStatus(adminStatus, snap.size + " resposta(s).");
-        snap.forEach(function (docSnap) {
-          var d = docSnap.data();
+        setStatus(adminStatus, rows.length + " resposta(s).");
+        rows.forEach(function (d) {
           var tr = document.createElement("tr");
-          tr.appendChild(textCell(formatDate(d.createdAt)));
+          tr.appendChild(textCell(formatDate(d.created_at)));
           tr.appendChild(textCell(d.nome));
           tr.appendChild(textCell(d.cidade));
-          tr.appendChild(textCell(d.time));
-          tr.appendChild(textCell(d.faixaEtaria));
-          tr.appendChild(textCell(d.comoConheceu));
+          tr.appendChild(textCell(d.time_coracao));
+          tr.appendChild(textCell(d.faixa_etaria));
+          tr.appendChild(textCell(d.como_conheceu));
           tr.appendChild(textCell(d.resposta));
           adminTableBody.appendChild(tr);
         });
-      })
-      .catch(function () {
-        setStatus(adminStatus, "Erro ao carregar (confira as regras do Firestore).", "error");
       });
   }
 })();
