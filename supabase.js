@@ -25,8 +25,9 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
   // segurança de verdade vem das políticas de RLS nas tabelas, não
   // de esconder essa chave.
   var SUPABASE_CONFIG = {
-    url: "https://SEUPROJETO.supabase.co",
-    anonKey: "SUA_ANON_KEY",
+    url: "https://kpfestnmeuizcctmsmhr.supabase.co",
+    anonKey:
+      "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImtwZmVzdG5tZXVpemNjdG1zbWhyIiwicm9sZSI6ImFub24iLCJpYXQiOjE3ODkzMjE4NDYsImV4cCI6MjEwNDg5Nzg0Nn0.kj8Lrn6YfEi2MfZCdS_W36sg7LUSWPWd1pDmN3rhClw",
   };
 
   var isConfigured = SUPABASE_CONFIG.url.indexOf("SEUPROJETO") === -1;
