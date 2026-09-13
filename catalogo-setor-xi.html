@@ -954,6 +954,15 @@ body.modal-open {
   max-width: none;
 }
 
+.admin-login {
+  text-align: center;
+}
+
+.admin-login__form {
+  max-width: 360px;
+  margin: 0 auto;
+}
+
 .admin-table-wrap {
   width: 100%;
   overflow-x: auto;
@@ -1074,8 +1083,7 @@ body.modal-open {
       </a>
       <nav class="site-header__account" aria-label="Conta">
         <a class="header-link" href="#questionario">Questionário</a>
-        <a class="header-link" href="#admin" id="account-admin-link" hidden>Painel</a>
-        <span class="header-greeting" id="account-greeting" hidden></span>
+        <a class="header-link header-greeting" href="#minha-conta" id="account-greeting" hidden></a>
         <button type="button" class="contact-btn contact-btn--primary header-login-btn" id="account-login-btn">Entrar</button>
         <button type="button" class="contact-btn header-logout-btn" id="account-logout-btn" hidden>Sair</button>
       </nav>
@@ -1153,26 +1161,54 @@ body.modal-open {
     </div>
   </section>
 
-  <section id="admin" hidden aria-labelledby="admin-title">
+  <section id="minha-conta" hidden aria-labelledby="conta-title">
+    <div class="container">
+      <div class="contact-panel">
+        <h2 class="contact-panel__title" id="conta-title">Minha conta</h2>
+        <p class="contact-panel__text" id="conta-info"></p>
+        <div class="contact-panel__actions">
+          <button type="button" class="contact-btn" id="conta-logout-btn">Sair</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="admin" aria-labelledby="admin-title">
     <div class="container">
       <div class="contact-panel contact-panel--admin">
-        <h2 class="contact-panel__title" id="admin-title">Painel — respostas do questionário</h2>
-        <p class="contact-panel__text" id="admin-status">Carregando…</p>
-        <div class="admin-table-wrap">
-          <table class="admin-table">
-            <thead>
-              <tr>
-                <th>Data</th>
-                <th>Nome</th>
-                <th>Cidade</th>
-                <th>Time</th>
-                <th>Faixa etária</th>
-                <th>Como conheceu</th>
-                <th>Resposta</th>
-              </tr>
-            </thead>
-            <tbody id="admin-table-body"></tbody>
-          </table>
+        <h2 class="contact-panel__title" id="admin-title">Área do administrador</h2>
+
+        <div class="admin-login" id="admin-login-wrap">
+          <p class="contact-panel__text">Acesso restrito aos administradores da Setor XI.</p>
+          <form class="contact-form admin-login__form" id="admin-login-form" autocomplete="off">
+            <input class="contact-form__field" type="email" name="email" placeholder="E-mail" required />
+            <input class="contact-form__field" type="password" name="senha" placeholder="Senha" required />
+            <button type="submit" class="contact-btn contact-btn--primary contact-form__submit">Entrar como admin</button>
+            <p class="contact-form__status" id="admin-login-status" role="status" aria-live="polite"></p>
+          </form>
+        </div>
+
+        <div id="admin-panel-wrap" hidden>
+          <p class="contact-panel__text" id="admin-status">Carregando…</p>
+          <div class="admin-table-wrap">
+            <table class="admin-table">
+              <thead>
+                <tr>
+                  <th>Data</th>
+                  <th>Nome</th>
+                  <th>Cidade</th>
+                  <th>Time</th>
+                  <th>Faixa etária</th>
+                  <th>Como conheceu</th>
+                  <th>Resposta</th>
+                </tr>
+              </thead>
+              <tbody id="admin-table-body"></tbody>
+            </table>
+          </div>
+          <div class="contact-panel__actions">
+            <button type="button" class="contact-btn" id="admin-logout-btn">Sair do painel</button>
+          </div>
         </div>
       </div>
     </div>
@@ -1184,6 +1220,7 @@ body.modal-open {
       <nav class="site-footer__contact" aria-label="Contato">
         <a href="https://instagram.com/setorxi" target="_blank" rel="noopener">@setorxi</a>
         <a href="https://wa.me/5545991271005" target="_blank" rel="noopener">WhatsApp (45) 99127-1005</a>
+        <a href="#admin">Acesso administrativo</a>
       </nav>
       <span class="site-footer__meta">© 2026 Setor XI · Vista o Jogo</span>
     </div>

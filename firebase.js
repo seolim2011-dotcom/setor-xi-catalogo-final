@@ -1,9 +1,18 @@
 /* ============================================================
-   Setor XI — login (cliente + admin), questionário e banco de dados
-   Usa Firebase Authentication (e-mail/senha) + Firestore, plano
-   Spark (gratuito). Troque FIREBASE_CONFIG abaixo pela config do
-   seu projeto em console.firebase.google.com — sem isso, login e
-   questionário mostram um aviso em vez de travar a página.
+   Setor XI — login separado de cliente e de admin, questionário
+   e banco de dados. Usa Firebase Authentication (e-mail/senha) +
+   Firestore, plano Spark (gratuito). Troque FIREBASE_CONFIG abaixo
+   pela config do seu projeto em console.firebase.google.com — sem
+   isso, login e questionário mostram um aviso em vez de travar a
+   página.
+
+   Cliente: modal do cabeçalho ("Entrar"), com aba de criar conta —
+   leva à seção #minha-conta.
+   Admin: formulário próprio dentro de #admin (sem cadastro; a conta
+   já existe, foi criada como cliente e depois marcada como admin
+   manualmente na coleção `admins` do Firestore, pelo console).
+   Os dois usam o mesmo Firebase Auth por baixo (é o mesmo projeto
+   gratuito) mas são fluxos de login completamente separados na tela.
    ============================================================ */
 
 import {
@@ -61,12 +70,20 @@ import {
   var loginBtn = document.getElementById("account-login-btn");
   var logoutBtn = document.getElementById("account-logout-btn");
   var greetingEl = document.getElementById("account-greeting");
-  var adminLink = document.getElementById("account-admin-link");
   var questionarioForm = document.getElementById("questionario-form");
   var questionarioStatus = document.getElementById("questionario-status");
-  var adminSection = document.getElementById("admin");
+
+  var contaSection = document.getElementById("minha-conta");
+  var contaInfo = document.getElementById("conta-info");
+  var contaLogoutBtn = document.getElementById("conta-logout-btn");
+
+  var adminLoginWrap = document.getElementById("admin-login-wrap");
+  var adminLoginForm = document.getElementById("admin-login-form");
+  var adminLoginStatus = document.getElementById("admin-login-status");
+  var adminPanelWrap = document.getElementById("admin-panel-wrap");
   var adminStatus = document.getElementById("admin-status");
   var adminTableBody = document.getElementById("admin-table-body");
+  var adminLogoutBtn = document.getElementById("admin-logout-btn");
 
   function setStatus(el, message, kind) {
     if (!el) return;
@@ -238,7 +255,31 @@ import {
         greetingEl.textContent = "";
       }
     }
-    if (adminLink) adminLink.hidden = !isAdminUser;
+  }
+
+  /* ============================================================
+     Área do cliente ("Minha conta") — só aparece pra quem entrou
+     pelo modal do cabeçalho, independente de ser admin ou não.
+     ============================================================ */
+  function renderContaSection() {
+    if (!contaSection) return;
+    contaSection.hidden = !currentUser;
+    if (!currentUser || !contaInfo) return;
+    var criadoEm =
+      currentUser.metadata && currentUser.metadata.creationTime
+        ? new Date(currentUser.metadata.creationTime).toLocaleDateString("pt-BR")
+        : "";
+    contaInfo.textContent =
+      (currentUser.displayName || "Cliente Setor XI") +
+      " · " +
+      currentUser.email +
+      (criadoEm ? " · conta criada em " + criadoEm : "");
+  }
+
+  if (contaLogoutBtn) {
+    contaLogoutBtn.addEventListener("click", function () {
+      if (auth) signOut(auth);
+    });
   }
 
   function checkIsAdmin(uid) {
@@ -267,6 +308,7 @@ import {
       if (!user) {
         isAdminUser = false;
         updateHeaderUI();
+        renderContaSection();
         renderAdminSection();
         return;
       }
@@ -275,6 +317,7 @@ import {
         isAdminUser = results[1];
         if (profile && profile.nome) currentUser.displayName = profile.nome;
         updateHeaderUI();
+        renderContaSection();
         renderAdminSection();
       });
     });
@@ -334,10 +377,49 @@ import {
   }
 
   function renderAdminSection() {
-    if (!adminSection) return;
-    adminSection.hidden = !isAdminUser;
-    if (!isAdminUser) return;
-    loadResponses();
+    if (!adminLoginWrap || !adminPanelWrap) return;
+    if (isAdminUser) {
+      adminLoginWrap.hidden = true;
+      adminPanelWrap.hidden = false;
+      loadResponses();
+    } else {
+      adminLoginWrap.hidden = false;
+      adminPanelWrap.hidden = true;
+    }
+  }
+
+  if (adminLoginForm) {
+    adminLoginForm.addEventListener("submit", function (e) {
+      e.preventDefault();
+      if (!isConfigured) {
+        setStatus(adminLoginStatus, "Painel ainda não conectado.", "error");
+        return;
+      }
+      var email = adminLoginForm.email.value.trim();
+      var senha = adminLoginForm.senha.value;
+      setStatus(adminLoginStatus, "Entrando...");
+      signInWithEmailAndPassword(auth, email, senha)
+        .then(function (cred) {
+          return checkIsAdmin(cred.user.uid);
+        })
+        .then(function (admin) {
+          if (!admin) {
+            setStatus(adminLoginStatus, "Essa conta não tem acesso administrativo.", "error");
+            return;
+          }
+          adminLoginForm.reset();
+          setStatus(adminLoginStatus, "");
+        })
+        .catch(function (err) {
+          setStatus(adminLoginStatus, friendlyAuthError(err), "error");
+        });
+    });
+  }
+
+  if (adminLogoutBtn) {
+    adminLogoutBtn.addEventListener("click", function () {
+      if (auth) signOut(auth);
+    });
   }
 
   function loadResponses() {

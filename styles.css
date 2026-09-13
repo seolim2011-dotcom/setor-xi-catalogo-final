@@ -945,6 +945,15 @@ body.modal-open {
   max-width: none;
 }
 
+.admin-login {
+  text-align: center;
+}
+
+.admin-login__form {
+  max-width: 360px;
+  margin: 0 auto;
+}
+
 .admin-table-wrap {
   width: 100%;
   overflow-x: auto;
