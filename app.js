@@ -620,24 +620,21 @@
   }
 
   function enterCatalog(e) {
-    var link = e ? e.currentTarget : null;
-    var hash = link ? link.getAttribute("href") : "#catalogo";
+    if (e) e.preventDefault();
     document.documentElement.classList.remove("hero-locked");
     document.body.classList.remove("hero-locked");
-    if (!hash || hash === "#") return;
-    if (e) e.preventDefault();
-    var target = document.querySelector(hash);
+    var target = document.getElementById("catalogo");
     // espera o scroll destravar antes de rolar
     window.requestAnimationFrame(function () {
       if (target && target.scrollIntoView) {
         target.scrollIntoView({ behavior: "smooth", block: "start" });
       } else {
-        window.location.hash = hash.slice(1);
+        window.location.hash = "catalogo";
       }
     });
   }
 
-  var enterLinks = document.querySelectorAll('a[href^="#"]');
+  var enterLinks = document.querySelectorAll('a[href="#catalogo"]');
   enterLinks.forEach(function (a) {
     a.addEventListener("click", enterCatalog);
   });

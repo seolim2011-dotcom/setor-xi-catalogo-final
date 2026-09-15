@@ -21,7 +21,7 @@
   <meta name="twitter:description" content="Seleções, clubes, retrô e edições especiais. Vista o Jogo." />
   <meta name="twitter:image" content="img/og.png" />
 
-  <link rel="stylesheet" href="styles.css?v=202609131724" />
+  <link rel="stylesheet" href="styles.css?v=202609121730" />
 </head>
 <body>
   <header class="site-header">
@@ -29,12 +29,7 @@
       <a class="brand" href="#" aria-label="Setor XI — Vista o Jogo, Viva o Esporte">
         <img class="brand__logo" src="img/logo-reverse-sm.png" alt="Setor XI" width="215" height="200" />
       </a>
-      <nav class="site-header__account" aria-label="Conta">
-        <a class="header-link" href="#questionario">Questionário</a>
-        <a class="header-link header-greeting" href="#minha-conta" id="account-greeting" hidden></a>
-        <button type="button" class="contact-btn contact-btn--primary header-login-btn" id="account-login-btn">Entrar</button>
-        <button type="button" class="contact-btn header-logout-btn" id="account-logout-btn" hidden>Sair</button>
-      </nav>
+      <span class="site-header__tag">Catálogo 2026</span>
     </div>
   </header>
 
@@ -74,109 +69,19 @@
     </noscript>
   </main>
 
-  <section id="questionario" aria-labelledby="questionario-title">
-    <div class="container">
-      <div class="contact-panel">
-        <h2 class="contact-panel__title" id="questionario-title">Ajude a gente a te conhecer melhor</h2>
-        <p class="contact-panel__text">
-          Leva menos de um minuto. Se você estiver logado, a resposta já fica
-          ligada à sua conta — mas dá pra responder sem login também.
-        </p>
-        <form class="contact-form" id="questionario-form" autocomplete="off">
-          <input class="contact-form__field" type="text" name="nome" placeholder="Seu nome" required />
-          <input class="contact-form__field" type="text" name="cidade" placeholder="Cidade / bairro" />
-          <input class="contact-form__field" type="text" name="time" placeholder="Time do coração" />
-          <select class="contact-form__field" name="faixaEtaria" required>
-            <option value="" disabled selected>Faixa etária</option>
-            <option value="-18">Até 18</option>
-            <option value="18-24">18 a 24</option>
-            <option value="25-34">25 a 34</option>
-            <option value="35-44">35 a 44</option>
-            <option value="45+">45 ou mais</option>
-          </select>
-          <select class="contact-form__field" name="comoConheceu" required>
-            <option value="" disabled selected>Como conheceu a Setor XI?</option>
-            <option value="instagram">Instagram</option>
-            <option value="indicacao">Indicação de amigo</option>
-            <option value="evento">Evento / feira</option>
-            <option value="outro">Outro</option>
-          </select>
-          <textarea class="contact-form__field contact-form__field--area" name="resposta" rows="3" placeholder="O que mais te chama atenção num lançamento de camisa?"></textarea>
-          <button type="submit" class="contact-btn contact-btn--primary contact-form__submit">Enviar resposta</button>
-          <p class="contact-form__status" id="questionario-status" role="status" aria-live="polite"></p>
-        </form>
-      </div>
-    </div>
-  </section>
-
-  <section id="minha-conta" hidden aria-labelledby="conta-title">
-    <div class="container">
-      <div class="contact-panel">
-        <h2 class="contact-panel__title" id="conta-title">Minha conta</h2>
-        <p class="contact-panel__text" id="conta-info"></p>
-        <div class="contact-panel__actions">
-          <button type="button" class="contact-btn" id="conta-logout-btn">Sair</button>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section id="admin" aria-labelledby="admin-title">
-    <div class="container">
-      <div class="contact-panel contact-panel--admin">
-        <h2 class="contact-panel__title" id="admin-title">Área do administrador</h2>
-
-        <div class="admin-login" id="admin-login-wrap">
-          <p class="contact-panel__text">Acesso restrito aos administradores da Setor XI.</p>
-          <form class="contact-form admin-login__form" id="admin-login-form" autocomplete="off">
-            <input class="contact-form__field" type="email" name="email" placeholder="E-mail" required />
-            <input class="contact-form__field" type="password" name="senha" placeholder="Senha" required />
-            <button type="submit" class="contact-btn contact-btn--primary contact-form__submit">Entrar como admin</button>
-            <p class="contact-form__status" id="admin-login-status" role="status" aria-live="polite"></p>
-          </form>
-        </div>
-
-        <div id="admin-panel-wrap" hidden>
-          <p class="contact-panel__text" id="admin-status">Carregando…</p>
-          <div class="admin-table-wrap">
-            <table class="admin-table">
-              <thead>
-                <tr>
-                  <th>Data</th>
-                  <th>Nome</th>
-                  <th>Cidade</th>
-                  <th>Time</th>
-                  <th>Faixa etária</th>
-                  <th>Como conheceu</th>
-                  <th>Resposta</th>
-                </tr>
-              </thead>
-              <tbody id="admin-table-body"></tbody>
-            </table>
-          </div>
-          <div class="contact-panel__actions">
-            <button type="button" class="contact-btn" id="admin-logout-btn">Sair do painel</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
-
   <footer class="site-footer">
     <div class="container site-footer__inner">
       <img class="site-footer__logo" src="img/logo-reverse-sm.png" alt="Setor XI" width="215" height="200" />
       <nav class="site-footer__contact" aria-label="Contato">
         <a href="https://instagram.com/setorxi" target="_blank" rel="noopener">@setorxi</a>
         <a href="https://wa.me/5545991271005" target="_blank" rel="noopener">WhatsApp (45) 99127-1005</a>
-        <a href="#admin">Acesso administrativo</a>
       </nav>
       <span class="site-footer__meta">© 2026 Setor XI · Vista o Jogo</span>
     </div>
   </footer>
 
   <!-- Dados do catálogo: edite products.js -->
-  <script src="products.js?v=202609131724"></script>
-  <script src="app.js?v=202609131724"></script>
-  <script type="module" src="supabase.js?v=202609131724"></script>
+  <script src="products.js?v=202609121730"></script>
+  <script src="app.js?v=202609121730"></script>
 </body>
 </html>

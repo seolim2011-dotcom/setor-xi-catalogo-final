@@ -31,12 +31,6 @@
   box-sizing: border-box;
 }
 
-/* garante que [hidden] vença qualquer display: flex/grid de outra regra
-   (mesmo bug já visto no .modal — melhor resolver de vez, aqui em cima) */
-[hidden] {
-  display: none !important;
-}
-
 html {
   -webkit-text-size-adjust: 100%;
 }
@@ -154,8 +148,6 @@ main,
   align-items: center;
   justify-content: space-between;
   gap: 16px;
-  flex-wrap: wrap;
-  row-gap: 8px;
   min-height: 92px;
 }
 
@@ -170,27 +162,11 @@ main,
   display: block;
 }
 
-.site-header__account {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-wrap: wrap;
-}
-
-.header-link {
+.site-header__tag {
   font-size: var(--step-1);
-  letter-spacing: 0.04em;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--muted);
-  transition: color 0.15s;
-}
-
-.header-link:hover {
-  color: var(--white);
-}
-
-.header-greeting {
-  font-size: var(--step-1);
-  color: var(--white);
 }
 
 /* ---------- Hero ---------- */
@@ -554,13 +530,6 @@ body.hero-locked {
   border-color: var(--accent-hover);
 }
 
-.header-login-btn,
-.header-logout-btn {
-  min-height: 36px;
-  padding: 8px 18px;
-  font-size: var(--step-1);
-}
-
 .contact-form-wrap {
   width: 100%;
   max-width: 420px;
@@ -593,12 +562,6 @@ body.hero-locked {
 
 .contact-form__field:focus-visible {
   border-color: var(--accent);
-}
-
-.contact-form__field--area {
-  min-height: 90px;
-  resize: vertical;
-  font: inherit;
 }
 
 /* campo-armadilha anti-spam (Formspree/Getform) — some visualmente, mas
@@ -835,42 +798,6 @@ body.modal-open {
   background: var(--accent-hover);
 }
 
-/* ---------- Modal de login / cadastro ---------- */
-
-.auth-modal__dialog {
-  grid-template-columns: 1fr;
-  width: min(420px, 100%);
-}
-
-.auth-modal__body {
-  padding: 34px 28px 28px;
-}
-
-.auth-modal__tabs {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 18px;
-}
-
-.auth-modal__tab {
-  flex: 1;
-  padding: 10px;
-  border: 1px solid var(--border-strong);
-  border-radius: var(--radius-sm);
-  background: transparent;
-  color: var(--muted);
-  font: inherit;
-  font-weight: 700;
-  cursor: pointer;
-  transition: border-color 0.15s, color 0.15s, background 0.15s;
-}
-
-.auth-modal__tab.is-active {
-  border-color: var(--accent);
-  color: var(--accent);
-  background: rgba(31, 221, 109, 0.08);
-}
-
 @media (max-width: 620px) {
   .modal {
     padding: 0;
@@ -931,61 +858,6 @@ body.modal-open {
   margin-left: auto;
   font-size: var(--step-1);
   color: var(--muted);
-}
-
-/* ---------- Painel admin ---------- */
-
-.contact-panel--admin {
-  align-items: stretch;
-  text-align: left;
-}
-
-.contact-panel--admin .contact-panel__title,
-.contact-panel--admin .contact-panel__text {
-  max-width: none;
-}
-
-.admin-login {
-  text-align: center;
-}
-
-.admin-login__form {
-  max-width: 360px;
-  margin: 0 auto;
-}
-
-.admin-table-wrap {
-  width: 100%;
-  overflow-x: auto;
-  margin-top: 10px;
-}
-
-.admin-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: var(--step-1);
-  text-align: left;
-}
-
-.admin-table th,
-.admin-table td {
-  padding: 10px 12px;
-  border-bottom: 1px solid var(--border);
-  white-space: nowrap;
-}
-
-.admin-table th:last-child,
-.admin-table td:last-child {
-  white-space: normal;
-  min-width: 220px;
-}
-
-.admin-table th {
-  color: var(--muted);
-  font-weight: 700;
-  text-transform: uppercase;
-  font-size: 0.68rem;
-  letter-spacing: 0.08em;
 }
 
 /* ---------- Foco acessível ---------- */
@@ -1058,7 +930,7 @@ body.modal-open {
     min-height: 68px;
   }
 
-  .header-greeting {
+  .site-header__tag {
     display: none;
   }
 }
