@@ -13,6 +13,7 @@
   var gridEl = document.getElementById("product-grid");
   var filtersEl = document.getElementById("filters");
   var countEl = document.getElementById("result-count");
+  var searchEl = document.getElementById("search-input");
   var bgEl = document.querySelector(".category-bg");
   var bgLayers = bgEl ? bgEl.querySelectorAll(".category-bg__layer") : [];
 
@@ -46,6 +47,15 @@
   var CONTACT_FORM_ENDPOINT = "https://formspree.io/f/SEU_FORM_ID";
 
   var activeCategory = "Todos";
+  var searchQuery = "";
+
+  /* remove acentos pra busca não depender de digitar "ção" certinho */
+  function normalizeText(value) {
+    return String(value)
+      .normalize("NFD")
+      .replace(/[̀-ͯ]/g, "")
+      .toLowerCase();
+  }
 
   /* --- Placeholder da marca: textura de listras + faixa diagonal --- */
   function placeholderImage(product) {
@@ -385,8 +395,12 @@
       return;
     }
 
+    var query = normalizeText(searchQuery.trim());
     var visible = products.filter(function (product) {
-      return activeCategory === "Todos" || product.category === activeCategory;
+      var matchesCategory =
+        activeCategory === "Todos" || product.category === activeCategory;
+      var matchesQuery = !query || normalizeText(product.name).indexOf(query) !== -1;
+      return matchesCategory && matchesQuery;
     });
 
     // sempre em ordem alfabética pelo nome
@@ -407,7 +421,9 @@
     if (visible.length === 0) {
       var empty = document.createElement("p");
       empty.className = "grid__empty";
-      empty.textContent = "Nenhuma camisa nesta categoria por enquanto.";
+      empty.textContent = query
+        ? 'Nenhuma camisa encontrada para "' + searchQuery.trim() + '".'
+        : "Nenhuma camisa nesta categoria por enquanto.";
       gridEl.appendChild(empty);
       return;
     }
@@ -638,6 +654,14 @@
   enterLinks.forEach(function (a) {
     a.addEventListener("click", enterCatalog);
   });
+
+  /* --- Busca por nome (combina com a categoria ativa) --- */
+  if (searchEl) {
+    searchEl.addEventListener("input", function () {
+      searchQuery = searchEl.value;
+      renderGrid(false);
+    });
+  }
 
   /* --- Início --- */
   if (!gridEl || !filtersEl) return;

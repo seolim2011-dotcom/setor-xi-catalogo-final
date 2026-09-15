@@ -300,6 +300,7 @@ body.hero-locked {
   display: flex;
   flex-wrap: wrap;
   gap: 8px;
+  flex: 1 1 auto;
 }
 
 .filter-chip {
@@ -325,6 +326,27 @@ body.hero-locked {
   border-color: var(--accent);
   color: var(--accent-ink);
   font-weight: 700;
+}
+
+.search-input {
+  flex: 0 1 220px;
+  min-width: 140px;
+  padding: 7px 15px;
+  border: 1px solid var(--border-strong);
+  border-radius: 999px;
+  background: var(--surface-2);
+  color: var(--white);
+  font: inherit;
+  font-size: var(--step-1);
+}
+
+.search-input::placeholder {
+  color: var(--muted);
+}
+
+.search-input:focus-visible {
+  outline: none;
+  border-color: var(--accent);
 }
 
 .catalog-nav__count {
