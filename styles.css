@@ -299,8 +299,9 @@ body.hero-locked {
 .filters {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
-  flex: 1 1 auto;
+  gap: 6px;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .filter-chip {
@@ -310,7 +311,7 @@ body.hero-locked {
   font: inherit;
   font-size: var(--step-1);
   letter-spacing: 0.04em;
-  padding: 7px 15px;
+  padding: 7px 12px;
   border-radius: 999px;
   cursor: pointer;
   transition: border-color 0.15s, background 0.15s, color 0.15s;
@@ -329,7 +330,7 @@ body.hero-locked {
 }
 
 .search-input {
-  flex: 0 1 220px;
+  flex: 0 1 170px;
   min-width: 140px;
   padding: 7px 15px;
   border: 1px solid var(--border-strong);
@@ -835,7 +836,7 @@ body.modal-open {
   }
 
   .modal__media {
-    aspect-ratio: 4 / 5;
+    aspect-ratio: 1 / 1;
   }
 }
 
@@ -929,8 +930,52 @@ body.modal-open {
     padding: 48px 0 64px;
   }
 
+  .contact-panel {
+    padding: 36px 18px;
+  }
+}
+
+@media (max-width: 900px) {
+  /* barra sticky compacta: categorias numa linha rolável, busca + contagem embaixo */
   .catalog-nav__inner {
-    align-items: flex-start;
+    align-items: center;
+    gap: 8px;
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+
+  .filters {
+    flex: 1 1 100%;
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .filters::-webkit-scrollbar {
+    display: none;
+  }
+
+  .filter-chip {
+    flex: 0 0 auto;
+    white-space: nowrap;
+    padding: 9px 15px;
+  }
+
+  .search-input {
+    flex: 1 1 0;
+    min-width: 0;
+    padding: 9px 15px;
+    font-size: 16px; /* evita zoom automático do iOS ao focar */
+  }
+}
+
+/* sem mouse: não deixa o "hover" grudar depois do toque */
+@media (hover: none) {
+  .card:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: var(--border);
   }
 }
 
@@ -940,8 +985,30 @@ body.modal-open {
   }
 
   .grid {
-    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-    gap: 14px;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+    padding: 20px 0 56px;
+  }
+
+  .card__body {
+    padding: 12px 12px 14px;
+    gap: 5px;
+  }
+
+  .card__name {
+    font-size: var(--step0);
+    line-height: 1.25;
+  }
+
+  .card__category {
+    font-size: 0.6rem;
+    letter-spacing: 0.1em;
+  }
+
+  .card__badge {
+    top: 8px;
+    left: 8px;
+    padding: 4px 8px;
   }
 
   .brand__logo {
