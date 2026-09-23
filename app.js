@@ -29,7 +29,7 @@
     "Camisas de Clube": "img/bg-camisas-de-clube.jpg",
   };
 
-  var BG_ROTATE_MS = 7000;
+  var BG_ROTATE_MS = 8500;
 
   var BRL = new Intl.NumberFormat("pt-BR", {
     style: "currency",

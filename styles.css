@@ -85,7 +85,7 @@ a {
   background-position: center 12%;
   opacity: 0;
   transition: opacity 1s ease;
-  animation: bg-drift 30s ease-in-out infinite alternate;
+  animation: bg-drift 46s ease-in-out infinite alternate;
   will-change: transform;
 }
 
@@ -117,7 +117,46 @@ a {
       rgba(10, 10, 10, 0.5) 0%,
       rgba(10, 10, 10, 0.28) 45%,
       rgba(10, 10, 10, 0.9) 100%
-    );
+    ),
+    /* vinheta: escurece os cantos, como uma lente de cinema */
+      radial-gradient(
+        ellipse at center,
+        rgba(0, 0, 0, 0) 45%,
+        rgba(0, 0, 0, 0.55) 100%
+      );
+}
+
+/* grão de filme sutil sobre o hero — textura, não ruído chamativo */
+.hero__grain {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  opacity: 0.5;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix type='matrix' values='0 0 0 0 1 0 0 0 0 1 0 0 0 0 1 0 0 0 0.045 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  background-size: 140px 140px;
+}
+
+/* barras estilo widescreen — moldura de cinema no topo/base do hero */
+.hero::before,
+.hero::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: var(--letterbox);
+  background: var(--black);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.hero::before {
+  top: 0;
+}
+
+.hero::after {
+  bottom: 0;
 }
 
 .site-header,
@@ -140,6 +179,10 @@ main,
   .site-header,
   .catalog-nav {
     backdrop-filter: blur(8px);
+  }
+
+  .modal__backdrop {
+    backdrop-filter: blur(3px);
   }
 }
 
@@ -172,6 +215,7 @@ main,
 /* ---------- Hero ---------- */
 
 .hero {
+  --letterbox: clamp(10px, 3vh, 28px);
   position: relative;
   overflow: hidden;
   min-height: 100vh;
@@ -193,11 +237,46 @@ body.hero-locked {
 
 .hero__inner {
   position: relative;
-  z-index: 1;
+  z-index: 3;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
   gap: 18px;
+}
+
+/* abertura em cascata, tipo cartela de título de filme */
+@keyframes title-card-in {
+  from {
+    opacity: 0;
+    transform: translateY(18px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero__kicker,
+.hero__title,
+.hero__lead,
+.hero__cta {
+  animation: title-card-in 0.9s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+.hero__kicker {
+  animation-delay: 0.05s;
+}
+
+.hero__title {
+  animation-delay: 0.16s;
+}
+
+.hero__lead {
+  animation-delay: 0.32s;
+}
+
+.hero__cta {
+  animation-delay: 0.46s;
 }
 
 .hero__kicker {
@@ -215,6 +294,7 @@ body.hero-locked {
   line-height: 0.9;
   letter-spacing: -0.03em;
   text-transform: uppercase;
+  text-shadow: 0 8px 40px rgba(0, 0, 0, 0.5);
 }
 
 .hero__title span {
@@ -252,10 +332,10 @@ body.hero-locked {
 
 .hero__scroll {
   position: absolute;
-  bottom: 16px;
+  bottom: calc(var(--letterbox) + 16px);
   left: 50%;
   transform: translateX(-50%);
-  z-index: 1;
+  z-index: 3;
   color: var(--muted);
   font-size: 1.4rem;
   line-height: 1;
@@ -416,6 +496,7 @@ body.hero-locked {
   aspect-ratio: 4 / 5;
   background: var(--surface-2);
   border-bottom: 1px solid var(--border);
+  overflow: hidden;
 }
 
 .card__media img {
@@ -423,6 +504,24 @@ body.hero-locked {
   height: 100%;
   object-fit: cover;
   display: block;
+  transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.card:hover .card__media img {
+  transform: scale(1.07);
+}
+
+/* leve sombra no rodapé da foto — mesma linguagem escura do hero */
+.card__media::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0) 65%,
+    rgba(0, 0, 0, 0.32) 100%
+  );
+  pointer-events: none;
 }
 
 .card__badge {
@@ -643,7 +742,17 @@ body.modal-open {
 .modal__backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.72);
+  background: rgba(0, 0, 0, 0.84);
+  animation: modal-backdrop-in 0.35s ease both;
+}
+
+@keyframes modal-backdrop-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 .modal__dialog {
@@ -657,7 +766,8 @@ body.modal-open {
   background: var(--surface);
   border: 1px solid var(--border-strong);
   border-radius: var(--radius);
-  animation: modal-in 0.2s ease both;
+  box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+  animation: modal-in 0.32s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
 @keyframes modal-in {
@@ -916,7 +1026,25 @@ body.modal-open {
     animation: none;
   }
 
+  .hero__kicker,
+  .hero__title,
+  .hero__lead,
+  .hero__cta {
+    animation: none;
+    opacity: 1;
+    transform: none;
+  }
+
+  .card__media img {
+    transition: none;
+  }
+
+  .card:hover .card__media img {
+    transform: none;
+  }
+
   .modal__dialog,
+  .modal__backdrop,
   .modal__thumb {
     animation: none;
     transition: none;
