@@ -888,7 +888,7 @@ window.SETOR_XI_PRODUCTS = [
   },
   {
     id: "retro-porto-95-96",
-    name: "Porto 1995/96",
+    name: "FC Porto 1995/96",
     category: "Retrô",
     price: 200,
     image: "fotos/retro-porto-95-96.jpg",
@@ -1275,5 +1275,5 @@ window.SETOR_XI_PRODUCTS = [
   { id: "retro-napoli-86-87", name: "Napoli 1986/87", category: "Retrô", price: 200, image: "fotos/retro-napoli-86-87.jpg", badge: null },
   { id: "retro-palmeiras-92-93", name: "Palmeiras 1992/93", category: "Retrô", price: 200, image: "fotos/retro-palmeiras-92-93.jpg", badge: null },
   { id: "retro-parma-05-06", name: "Parma 2005/06", category: "Retrô", price: 200, image: "fotos/retro-parma-05-06.jpg", badge: null },
-  { id: "retro-porto-03-04", name: "Porto 2003/04", category: "Retrô", price: 200, image: "fotos/retro-porto-03-04.jpg", badge: null },
+  { id: "retro-porto-03-04", name: "FC Porto 2003/04", category: "Retrô", price: 200, image: "fotos/retro-porto-03-04.jpg", badge: null },
 ];
