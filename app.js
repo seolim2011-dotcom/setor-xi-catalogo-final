@@ -27,6 +27,9 @@
       "img/bg-selecao-argentina.jpg",
     ],
     "Camisas de Clube": "img/bg-camisas-de-clube.jpg",
+    "Edições Especiais": "img/bg-especiais.jpg",
+    Retrô: "img/bg-retro.jpg",
+    "Corta-Ventos": "img/bg-corta-ventos.jpg",
   };
 
   var BG_ROTATE_MS = 8500;
