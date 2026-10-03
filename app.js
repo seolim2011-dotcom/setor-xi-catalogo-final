@@ -43,6 +43,17 @@
   var INSTAGRAM_URL = "https://instagram.com/setorxi";
   var CONTACT_CATEGORY = "Entre em contato";
 
+  /* Carrinho: tamanhos disponíveis, endereço público do site (as fotos
+     vão como link na mensagem do WhatsApp) e chave do localStorage. */
+  var SIZES = ["PP", "P", "M", "G", "GG", "2GG", "3GG", "4GG"];
+  var SITE_URL = "https://seolim2011-dotcom.github.io/setor-xi-catalogo-final/";
+  var CART_KEY = "setorxi-cart-v1";
+
+  var productById = {};
+  products.forEach(function (product) {
+    productById[product.id] = product;
+  });
+
   /* TROQUE pelo endpoint real do seu form no Formspree (ou Getform):
      crie uma conta grátis em formspree.io, crie um form lá, e cole aqui
      a URL que eles derem (tipo "https://formspree.io/f/xxxxxxx"). Até lá
@@ -122,15 +133,43 @@
       '<h2 class="modal__name" id="modal-name"></h2>' +
       '<p class="modal__story"></p>' +
       '<p class="modal__price"></p>' +
+      '<div class="modal__sizes" role="group" aria-label="Tamanho">' +
+      '<span class="modal__sizes-label">Tamanho</span>' +
+      '<div class="modal__sizes-list"></div>' +
+      "</div>" +
+      '<div class="modal__actions">' +
+      '<button type="button" class="modal__add">Adicionar ao carrinho</button>' +
+      '<button type="button" class="modal__view-cart" hidden>Ver carrinho</button>' +
+      "</div>" +
+      '<p class="modal__add-status" role="status" aria-live="polite"></p>' +
       '<a class="modal__cta" target="_blank" rel="noopener">Falar no WhatsApp</a>' +
       "</div>" +
       "</div>";
     document.body.appendChild(root);
 
+    var sizesList = root.querySelector(".modal__sizes-list");
+    SIZES.forEach(function (size) {
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "size-chip";
+      chip.dataset.size = size;
+      chip.textContent = size;
+      chip.setAttribute("aria-pressed", "false");
+      sizesList.appendChild(chip);
+    });
+
     root.addEventListener("click", function (e) {
       if (e.target.closest("[data-close]")) closeProduct();
       var thumbBtn = e.target.closest(".modal__thumb");
       if (thumbBtn) selectGalleryImage(Number(thumbBtn.dataset.index));
+      var sizeBtn = e.target.closest(".size-chip");
+      if (sizeBtn) selectSize(sizeBtn.dataset.size);
+      if (e.target.closest(".modal__add")) addCurrentToCart();
+      if (e.target.closest(".modal__view-cart")) {
+        var backTo = lastFocused;
+        closeProduct(true);
+        openCart(backTo);
+      }
     });
 
     return {
@@ -141,9 +180,66 @@
       name: root.querySelector(".modal__name"),
       price: root.querySelector(".modal__price"),
       story: root.querySelector(".modal__story"),
+      sizes: root.querySelector(".modal__sizes"),
+      chips: root.querySelectorAll(".size-chip"),
+      viewCart: root.querySelector(".modal__view-cart"),
+      status: root.querySelector(".modal__add-status"),
       cta: root.querySelector(".modal__cta"),
       close: root.querySelector(".modal__close"),
     };
+  }
+
+  /* --- Mensagem do WhatsApp (o link só aceita texto: as fotos vão como
+     link, e o WhatsApp mostra a miniatura da imagem na conversa) --- */
+  function photoUrl(product) {
+    if (!product.image) return "";
+    var live =
+      /^https?:$/.test(location.protocol) &&
+      !/^(localhost|127\.0\.0\.1)$/.test(location.hostname);
+    return new URL(product.image, live ? document.baseURI : SITE_URL).href;
+  }
+
+  function whatsappLink(text) {
+    return WHATSAPP_URL + "?text=" + encodeURIComponent(text);
+  }
+
+  function productMessage(product, size) {
+    var lines = ["Olá! Tenho interesse na " + product.name + " (Setor XI)."];
+    if (size) lines.push("Tamanho: " + size);
+    var photo = photoUrl(product);
+    if (photo) lines.push("Foto: " + photo);
+    return lines.join("\n");
+  }
+
+  /* --- Tamanho escolhido na telinha --- */
+  var currentProduct = null;
+  var selectedSize = null;
+
+  function selectSize(size) {
+    selectedSize = size;
+    modal.chips.forEach(function (chip) {
+      chip.setAttribute("aria-pressed", String(chip.dataset.size === size));
+    });
+    modal.sizes.classList.remove("is-error");
+    setAddStatus("", false);
+    modal.cta.href = whatsappLink(productMessage(currentProduct, selectedSize));
+  }
+
+  function setAddStatus(message, isError) {
+    modal.status.textContent = message;
+    modal.status.classList.toggle("modal__add-status--error", Boolean(isError));
+  }
+
+  function addCurrentToCart() {
+    if (!currentProduct) return;
+    if (!selectedSize) {
+      modal.sizes.classList.add("is-error");
+      setAddStatus("Escolha um tamanho pra adicionar ao carrinho.", true);
+      return;
+    }
+    addToCart(currentProduct, selectedSize);
+    setAddStatus("Adicionado ao carrinho ✓ (tamanho " + selectedSize + ")", false);
+    modal.viewCart.hidden = false;
   }
 
   function openProduct(product) {
@@ -159,10 +255,15 @@
     } else {
       modal.price.textContent = "Preço a combinar";
     }
-    modal.cta.href =
-      WHATSAPP_URL +
-      "?text=" +
-      encodeURIComponent("Olá! Tenho interesse na " + product.name + " (Setor XI).");
+    currentProduct = product;
+    selectedSize = null;
+    modal.chips.forEach(function (chip) {
+      chip.setAttribute("aria-pressed", "false");
+    });
+    modal.sizes.classList.remove("is-error");
+    modal.viewCart.hidden = true;
+    setAddStatus("", false);
+    modal.cta.href = whatsappLink(productMessage(product, null));
 
     lastFocused = document.activeElement;
     modal.root.hidden = false;
@@ -170,15 +271,392 @@
     modal.close.focus();
   }
 
-  function closeProduct() {
+  function closeProduct(keepFocus) {
     modal.root.hidden = true;
     document.body.classList.remove("modal-open");
-    if (lastFocused && lastFocused.focus) lastFocused.focus();
+    if (!keepFocus && lastFocused && lastFocused.focus) lastFocused.focus();
   }
 
   document.addEventListener("keydown", function (e) {
-    if (e.key === "Escape" && !modal.root.hidden) closeProduct();
+    if (e.key !== "Escape") return;
+    if (!cartUi.root.hidden) closeCart();
+    else if (!modal.root.hidden) closeProduct();
   });
+
+  /* ============================================================
+     Carrinho — fica no localStorage; "Finalizar" abre o WhatsApp
+     com a lista do pedido (nome, tamanho, quantidade e foto).
+     ============================================================ */
+  var cart = loadCart();
+  var cartLastFocused = null;
+  var cartUi = buildCartUi();
+
+  function loadCart() {
+    try {
+      var raw = JSON.parse(localStorage.getItem(CART_KEY) || "[]");
+      return raw
+        .filter(function (item) {
+          return (
+            item &&
+            productById[item.id] &&
+            SIZES.indexOf(item.size) !== -1 &&
+            item.qty > 0
+          );
+        })
+        .map(function (item) {
+          return {
+            id: item.id,
+            size: item.size,
+            qty: Math.min(99, Math.floor(item.qty)),
+          };
+        });
+    } catch (err) {
+      return [];
+    }
+  }
+
+  function saveCart() {
+    try {
+      localStorage.setItem(CART_KEY, JSON.stringify(cart));
+    } catch (err) {
+      /* navegador sem armazenamento: o carrinho vale só nesta visita */
+    }
+  }
+
+  function cartCount() {
+    return cart.reduce(function (total, item) {
+      return total + item.qty;
+    }, 0);
+  }
+
+  function findLine(id, size) {
+    for (var i = 0; i < cart.length; i++) {
+      if (cart[i].id === id && cart[i].size === size) return cart[i];
+    }
+    return null;
+  }
+
+  function addToCart(product, size) {
+    var line = findLine(product.id, size);
+    if (line) line.qty = Math.min(99, line.qty + 1);
+    else cart.push({ id: product.id, size: size, qty: 1 });
+    cartChanged();
+    cartUi.fab.classList.remove("is-bump");
+    void cartUi.fab.offsetWidth;
+    cartUi.fab.classList.add("is-bump");
+  }
+
+  function changeQty(index, delta) {
+    var line = cart[index];
+    if (!line) return;
+    line.qty = Math.min(99, line.qty + delta);
+    if (line.qty <= 0) cart.splice(index, 1);
+    cartChanged();
+  }
+
+  function changeSize(index, size) {
+    var line = cart[index];
+    if (!line || SIZES.indexOf(size) === -1) return;
+    var other = findLine(line.id, size);
+    if (other && other !== line) {
+      other.qty = Math.min(99, other.qty + line.qty);
+      cart.splice(index, 1);
+    } else {
+      line.size = size;
+    }
+    cartChanged();
+  }
+
+  function cartTotals() {
+    var sum = 0;
+    var toQuote = false;
+    cart.forEach(function (item) {
+      var price = productById[item.id].price;
+      if (typeof price === "number") sum += price * item.qty;
+      else toQuote = true;
+    });
+    var label;
+    if (sum > 0) label = BRL.format(sum) + (toQuote ? " + itens a combinar" : "");
+    else label = "a combinar";
+    return { label: label };
+  }
+
+  function priceLabel(product) {
+    return typeof product.price === "number"
+      ? BRL.format(product.price) + " cada"
+      : "a combinar";
+  }
+
+  function cartMessage() {
+    var lines = ["Olá! Quero fazer este pedido na Setor XI:", ""];
+    cart.forEach(function (item, index) {
+      var product = productById[item.id];
+      lines.push(index + 1 + ") " + product.name);
+      lines.push("Tamanho: " + item.size + " | Qtd: " + item.qty);
+      lines.push("Valor: " + priceLabel(product));
+      var photo = photoUrl(product);
+      if (photo) lines.push("Foto: " + photo);
+      lines.push("");
+    });
+    lines.push("Total: " + cartTotals().label);
+    return lines.join("\n");
+  }
+
+  function buildCartUi() {
+    var fab = document.createElement("button");
+    fab.type = "button";
+    fab.className = "cart-fab";
+    fab.setAttribute("aria-label", "Abrir carrinho");
+    fab.innerHTML =
+      '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
+      '<path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>' +
+      '<span class="cart-fab__count" hidden></span>';
+    document.body.appendChild(fab);
+
+    var root = document.createElement("div");
+    root.className = "cart";
+    root.hidden = true;
+    root.setAttribute("role", "dialog");
+    root.setAttribute("aria-modal", "true");
+    root.setAttribute("aria-labelledby", "cart-title");
+    root.innerHTML =
+      '<div class="cart__backdrop" data-close-cart></div>' +
+      '<aside class="cart__panel">' +
+      '<header class="cart__head">' +
+      '<h2 class="cart__title" id="cart-title">Seu carrinho</h2>' +
+      '<button type="button" class="cart__close" data-close-cart aria-label="Fechar carrinho">&times;</button>' +
+      "</header>" +
+      '<div class="cart__body"></div>' +
+      '<footer class="cart__foot" hidden>' +
+      '<p class="cart__total"></p>' +
+      '<a class="cart__checkout" target="_blank" rel="noopener">Finalizar no WhatsApp</a>' +
+      '<button type="button" class="cart__share" hidden>Enviar com as fotos anexadas</button>' +
+      '<p class="cart__share-status" role="status" aria-live="polite"></p>' +
+      '<p class="cart__note">As fotos vão como link na mensagem do WhatsApp (aparece a miniatura na conversa). Em celulares compatíveis, o botão "Enviar com as fotos anexadas" manda as imagens de verdade.</p>' +
+      '<button type="button" class="cart__clear">Esvaziar carrinho</button>' +
+      "</footer>" +
+      "</aside>";
+    document.body.appendChild(root);
+
+    var ui = {
+      fab: fab,
+      fabCount: fab.querySelector(".cart-fab__count"),
+      root: root,
+      body: root.querySelector(".cart__body"),
+      foot: root.querySelector(".cart__foot"),
+      total: root.querySelector(".cart__total"),
+      checkout: root.querySelector(".cart__checkout"),
+      share: root.querySelector(".cart__share"),
+      shareStatus: root.querySelector(".cart__share-status"),
+      close: root.querySelector(".cart__close"),
+    };
+
+    fab.addEventListener("click", function () {
+      openCart(fab);
+    });
+
+    root.addEventListener("click", function (e) {
+      if (e.target.closest("[data-close-cart]")) closeCart();
+      if (e.target.closest(".cart__clear")) {
+        cart = [];
+        cartChanged();
+        return;
+      }
+      var row = e.target.closest(".cart-item");
+      if (!row) return;
+      var index = Number(row.dataset.index);
+      var stepBtn = e.target.closest("[data-step]");
+      if (stepBtn) changeQty(index, Number(stepBtn.dataset.step));
+      if (e.target.closest(".cart-item__remove")) changeQty(index, -99);
+    });
+
+    root.addEventListener("change", function (e) {
+      var select = e.target.closest(".cart-item__size");
+      if (select) changeSize(Number(select.closest(".cart-item").dataset.index), select.value);
+    });
+
+    ui.share.addEventListener("click", shareCartWithPhotos);
+    if (canShareFiles()) ui.share.hidden = false;
+
+    return ui;
+  }
+
+  /* Só no celular: abre a folha de compartilhar do aparelho com as fotos
+     anexadas de verdade (o usuário escolhe o WhatsApp da Setor XI). */
+  function canShareFiles() {
+    try {
+      if (!window.matchMedia("(pointer: coarse)").matches) return false;
+      if (!navigator.share || !navigator.canShare) return false;
+      return navigator.canShare({
+        files: [new File([""], "x.jpg", { type: "image/jpeg" })],
+      });
+    } catch (err) {
+      return false;
+    }
+  }
+
+  function shareCartWithPhotos() {
+    if (!cart.length) return;
+    var seen = {};
+    var unique = [];
+    cart.forEach(function (item) {
+      if (!seen[item.id]) {
+        seen[item.id] = true;
+        unique.push(productById[item.id]);
+      }
+    });
+    cartUi.shareStatus.textContent = "Preparando as fotos...";
+    Promise.all(
+      unique.map(function (product) {
+        return fetch(imageUrl(product))
+          .then(function (res) {
+            return res.blob();
+          })
+          .then(function (blob) {
+            return new File([blob], product.id + ".jpg", {
+              type: blob.type || "image/jpeg",
+            });
+          });
+      })
+    )
+      .then(function (files) {
+        return navigator.share({ files: files, text: cartMessage() });
+      })
+      .then(function () {
+        cartUi.shareStatus.textContent = "";
+      })
+      .catch(function (err) {
+        if (err && err.name === "AbortError") {
+          cartUi.shareStatus.textContent = "";
+          return;
+        }
+        cartUi.shareStatus.textContent =
+          "Não deu pra anexar as fotos — use o botão verde (as fotos vão como link).";
+      });
+  }
+
+  function renderCart() {
+    var count = cartCount();
+    cartUi.fabCount.hidden = count === 0;
+    cartUi.fabCount.textContent = count > 99 ? "99+" : String(count);
+    cartUi.fab.setAttribute(
+      "aria-label",
+      count ? "Abrir carrinho (" + count + " itens)" : "Abrir carrinho"
+    );
+
+    cartUi.body.innerHTML = "";
+    cartUi.shareStatus.textContent = "";
+
+    if (!cart.length) {
+      var empty = document.createElement("p");
+      empty.className = "cart__empty";
+      empty.textContent =
+        "Seu carrinho está vazio. Escolha uma camisa, selecione o tamanho e toque em \"Adicionar ao carrinho\".";
+      cartUi.body.appendChild(empty);
+      cartUi.foot.hidden = true;
+      return;
+    }
+
+    cart.forEach(function (item, index) {
+      var product = productById[item.id];
+
+      var row = document.createElement("div");
+      row.className = "cart-item";
+      row.dataset.index = String(index);
+
+      var thumb = document.createElement("img");
+      thumb.className = "cart-item__thumb";
+      thumb.alt = "";
+      thumb.decoding = "async";
+      setCardImage(thumb, product);
+      thumb.sizes = "72px";
+
+      var info = document.createElement("div");
+      info.className = "cart-item__info";
+
+      var name = document.createElement("p");
+      name.className = "cart-item__name";
+      name.textContent = product.name;
+
+      var price = document.createElement("p");
+      price.className = "cart-item__price";
+      price.textContent = priceLabel(product);
+
+      var controls = document.createElement("div");
+      controls.className = "cart-item__controls";
+
+      var select = document.createElement("select");
+      select.className = "cart-item__size";
+      select.setAttribute("aria-label", "Tamanho de " + product.name);
+      SIZES.forEach(function (size) {
+        var option = document.createElement("option");
+        option.value = size;
+        option.textContent = size;
+        option.selected = size === item.size;
+        select.appendChild(option);
+      });
+
+      var qty = document.createElement("div");
+      qty.className = "cart-item__qty";
+      var minus = document.createElement("button");
+      minus.type = "button";
+      minus.dataset.step = "-1";
+      minus.setAttribute("aria-label", "Diminuir quantidade");
+      minus.textContent = "−";
+      var qtyValue = document.createElement("span");
+      qtyValue.textContent = String(item.qty);
+      var plus = document.createElement("button");
+      plus.type = "button";
+      plus.dataset.step = "1";
+      plus.setAttribute("aria-label", "Aumentar quantidade");
+      plus.textContent = "+";
+      qty.appendChild(minus);
+      qty.appendChild(qtyValue);
+      qty.appendChild(plus);
+
+      controls.appendChild(select);
+      controls.appendChild(qty);
+
+      info.appendChild(name);
+      info.appendChild(price);
+      info.appendChild(controls);
+
+      var remove = document.createElement("button");
+      remove.type = "button";
+      remove.className = "cart-item__remove";
+      remove.setAttribute("aria-label", "Remover " + product.name);
+      remove.innerHTML = "&times;";
+
+      row.appendChild(thumb);
+      row.appendChild(info);
+      row.appendChild(remove);
+      cartUi.body.appendChild(row);
+    });
+
+    cartUi.total.textContent = "Total: " + cartTotals().label;
+    cartUi.checkout.href = whatsappLink(cartMessage());
+    cartUi.foot.hidden = false;
+  }
+
+  function cartChanged() {
+    saveCart();
+    renderCart();
+  }
+
+  function openCart(returnTo) {
+    cartLastFocused = returnTo || document.activeElement;
+    cartUi.root.hidden = false;
+    document.body.classList.add("modal-open");
+    cartUi.close.focus();
+  }
+
+  function closeCart() {
+    cartUi.root.hidden = true;
+    document.body.classList.remove("modal-open");
+    if (cartLastFocused && cartLastFocused.focus) cartLastFocused.focus();
+  }
+
+  renderCart();
 
   /* --- Filtros de categoria --- */
   function buildFilters() {
@@ -577,12 +1055,7 @@
     } else {
       price = document.createElement("a");
       price.className = "card__price card__price--contact";
-      price.href =
-        WHATSAPP_URL +
-        "?text=" +
-        encodeURIComponent(
-          "Olá! Tenho interesse na " + product.name + " (Setor XI)."
-        );
+      price.href = whatsappLink(productMessage(product, null));
       price.target = "_blank";
       price.rel = "noopener";
       price.textContent = "Falar no WhatsApp";
