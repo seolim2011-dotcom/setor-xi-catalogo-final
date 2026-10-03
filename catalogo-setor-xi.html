@@ -3380,7 +3380,8 @@ window.SETOR_XI_PRODUCTS = [
      web do Apps Script (termina em /exec; passo a passo em
      google-sheets-script.gs). Até lá o formulário mostra um aviso em vez
      de tentar enviar. */
-  var CONTACT_SHEET_ENDPOINT = "https://script.google.com/macros/s/SEU_SCRIPT_ID/exec";
+  var CONTACT_SHEET_ENDPOINT =
+    "https://script.google.com/macros/s/AKfycbx-09zZHztgDTo3BCg0sqsvITcFEV9CI6Y-xfrcH124e7UFytK4zIG85IiN0Wt9ooASnw/exec";
 
   var activeCategory = "Todos";
   var searchQuery = "";
@@ -4360,18 +4361,28 @@ window.SETOR_XI_PRODUCTS = [
     }
 
     submitBtn.disabled = true;
-    statusEl.textContent = "Enviando...";
+    statusEl.textContent = "Enviando... (pode levar alguns segundos)";
     statusEl.className = "contact-form__status";
+
+    // o Apps Script às vezes demora; sem limite o botão ficaria preso
+    var controller = typeof AbortController === "function" ? new AbortController() : null;
+    var timer = controller
+      ? window.setTimeout(function () {
+          controller.abort();
+        }, 45000)
+      : null;
 
     fetch(CONTACT_SHEET_ENDPOINT, {
       method: "POST",
       body: new FormData(form),
+      signal: controller ? controller.signal : undefined,
     })
       .then(function (response) {
         return response.json();
       })
       .then(function (data) {
-        if (!data || data.result !== "success") {
+        // aceita as duas respostas: {result:"success"} (google-sheets-script.gs) e {ok:true}
+        if (!data || (data.result !== "success" && data.ok !== true)) {
           throw new Error("resposta ruim do formulário");
         }
         statusEl.textContent = "Recebemos! A gente chama você em breve.";
@@ -4384,6 +4395,7 @@ window.SETOR_XI_PRODUCTS = [
         statusEl.className = "contact-form__status contact-form__status--error";
       })
       .then(function () {
+        if (timer) window.clearTimeout(timer);
         submitBtn.disabled = false;
       });
   }
