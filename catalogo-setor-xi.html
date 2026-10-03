@@ -3364,11 +3364,11 @@ window.SETOR_XI_PRODUCTS = [
     productById[product.id] = product;
   });
 
-  /* TROQUE pelo endpoint real do seu form no Formspree (ou Getform):
-     crie uma conta grátis em formspree.io, crie um form lá, e cole aqui
-     a URL que eles derem (tipo "https://formspree.io/f/xxxxxxx"). Até lá
-     o formulário do site mostra um aviso em vez de tentar enviar. */
-  var CONTACT_FORM_ENDPOINT = "https://formspree.io/f/SEU_FORM_ID";
+  /* Formulário de contato -> Google Planilhas. Cole aqui a URL do app da
+     web do Apps Script (termina em /exec; passo a passo em
+     google-sheets-script.gs). Até lá o formulário mostra um aviso em vez
+     de tentar enviar. */
+  var CONTACT_SHEET_ENDPOINT = "https://script.google.com/macros/s/SEU_SCRIPT_ID/exec";
 
   var activeCategory = "Todos";
   var searchQuery = "";
@@ -4139,16 +4139,16 @@ window.SETOR_XI_PRODUCTS = [
     gridEl.appendChild(panel);
   }
 
-  /* Envia o formulário de contato pro Formspree/Getform (ver
-     CONTACT_FORM_ENDPOINT lá em cima) e mostra o resultado sem sair da
-     página. O dado fica salvo e filtrável no painel do serviço. */
+  /* Envia o formulário de contato pra planilha do Google (ver
+     CONTACT_SHEET_ENDPOINT lá em cima) e mostra o resultado sem sair da
+     página. Cada envio vira uma linha na aba "Contatos". */
   function handleContactSubmit(e) {
     e.preventDefault();
     var form = e.target;
     var statusEl = form.querySelector(".contact-form__status");
     var submitBtn = form.querySelector(".contact-form__submit");
 
-    if (CONTACT_FORM_ENDPOINT.indexOf("SEU_FORM_ID") !== -1) {
+    if (CONTACT_SHEET_ENDPOINT.indexOf("SEU_SCRIPT_ID") !== -1) {
       statusEl.textContent =
         "Formulário ainda não conectado — chama a gente pelo WhatsApp por enquanto.";
       statusEl.className = "contact-form__status contact-form__status--error";
@@ -4159,13 +4159,17 @@ window.SETOR_XI_PRODUCTS = [
     statusEl.textContent = "Enviando...";
     statusEl.className = "contact-form__status";
 
-    fetch(CONTACT_FORM_ENDPOINT, {
+    fetch(CONTACT_SHEET_ENDPOINT, {
       method: "POST",
-      headers: { Accept: "application/json" },
       body: new FormData(form),
     })
       .then(function (response) {
-        if (!response.ok) throw new Error("resposta ruim do formulário");
+        return response.json();
+      })
+      .then(function (data) {
+        if (!data || data.result !== "success") {
+          throw new Error("resposta ruim do formulário");
+        }
         statusEl.textContent = "Recebemos! A gente chama você em breve.";
         statusEl.className = "contact-form__status contact-form__status--ok";
         form.reset();
