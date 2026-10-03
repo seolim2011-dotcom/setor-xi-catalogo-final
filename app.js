@@ -387,15 +387,24 @@
       : "a combinar";
   }
 
-  function cartMessage() {
-    var lines = ["Olá! Quero fazer este pedido na Setor XI:", ""];
+  /* withLinks=false: as fotos vão como imagem (cada uma com tamanho e
+     quantidade escritos); true: versão só texto, com o link de cada foto. */
+  function cartMessage(withLinks) {
+    var lines = [
+      withLinks
+        ? "Olá! Quero fazer este pedido na Setor XI:"
+        : "Olá! Quero fazer este pedido na Setor XI (as fotos estão nas imagens):",
+      "",
+    ];
     cart.forEach(function (item, index) {
       var product = productById[item.id];
       lines.push(index + 1 + ") " + product.name);
       lines.push("Tamanho: " + item.size + " | Qtd: " + item.qty);
       lines.push("Valor: " + priceLabel(product));
-      var photo = photoUrl(product);
-      if (photo) lines.push("Foto: " + photo);
+      if (withLinks) {
+        var photo = photoUrl(product);
+        if (photo) lines.push("Foto: " + photo);
+      }
       lines.push("");
     });
     lines.push("Total: " + cartTotals().label);
@@ -430,10 +439,11 @@
       '<div class="cart__body"></div>' +
       '<footer class="cart__foot" hidden>' +
       '<p class="cart__total"></p>' +
-      '<a class="cart__checkout" target="_blank" rel="noopener">Finalizar no WhatsApp</a>' +
-      '<button type="button" class="cart__share" hidden>Enviar com as fotos anexadas</button>' +
-      '<p class="cart__share-status" role="status" aria-live="polite"></p>' +
-      '<p class="cart__note">As fotos vão como link na mensagem do WhatsApp (aparece a miniatura na conversa). Em celulares compatíveis, o botão "Enviar com as fotos anexadas" manda as imagens de verdade.</p>' +
+      '<button type="button" class="cart__send">Enviar pedido no WhatsApp</button>' +
+      '<p class="cart__status" role="status" aria-live="polite"></p>' +
+      '<a class="cart__open-wa" target="_blank" rel="noopener" hidden>Abrir o WhatsApp</a>' +
+      '<p class="cart__note"></p>' +
+      '<a class="cart__text-link" target="_blank" rel="noopener">Prefere só texto? Enviar com as fotos em link</a>' +
       '<button type="button" class="cart__clear">Esvaziar carrinho</button>' +
       "</footer>" +
       "</aside>";
@@ -446,9 +456,11 @@
       body: root.querySelector(".cart__body"),
       foot: root.querySelector(".cart__foot"),
       total: root.querySelector(".cart__total"),
-      checkout: root.querySelector(".cart__checkout"),
-      share: root.querySelector(".cart__share"),
-      shareStatus: root.querySelector(".cart__share-status"),
+      send: root.querySelector(".cart__send"),
+      status: root.querySelector(".cart__status"),
+      openWa: root.querySelector(".cart__open-wa"),
+      note: root.querySelector(".cart__note"),
+      textLink: root.querySelector(".cart__text-link"),
       close: root.querySelector(".cart__close"),
     };
 
@@ -476,14 +488,30 @@
       if (select) changeSize(Number(select.closest(".cart-item").dataset.index), select.value);
     });
 
-    ui.share.addEventListener("click", shareCartWithPhotos);
-    if (canShareFiles()) ui.share.hidden = false;
+    ui.send.addEventListener("click", sendOrder);
 
     return ui;
   }
 
-  /* Só no celular: abre a folha de compartilhar do aparelho com as fotos
-     anexadas de verdade (o usuário escolhe o WhatsApp da Setor XI). */
+  /* ------------------------------------------------------------
+     Enviar o pedido com as fotos COMO IMAGEM.
+     O link wa.me só carrega texto, então as imagens vão por outro
+     caminho:
+       - celular: folha de compartilhar do aparelho, com as imagens
+         anexadas (a pessoa escolhe o WhatsApp e o contato da loja);
+       - computador: uma imagem com todas as camisas é copiada pra
+         área de transferência e o WhatsApp abre — é só colar (Ctrl+V);
+       - se nada disso funcionar: texto com o link das fotos.
+     Cada imagem é a foto da camisa com o nome, o tamanho e a
+     quantidade escritos na faixa de baixo.
+     ------------------------------------------------------------ */
+  var NOTE_SHARE =
+    "Vai abrir a tela de compartilhar do celular: escolha o WhatsApp e depois o contato da Setor XI.";
+  var NOTE_COPY =
+    "A imagem do pedido é copiada: cole (Ctrl+V) na conversa do WhatsApp que abrir.";
+  var NOTE_LINK = "Neste navegador as fotos vão como link na mensagem.";
+  var prepared = { key: "", promise: null };
+
   function canShareFiles() {
     try {
       if (!window.matchMedia("(pointer: coarse)").matches) return false;
@@ -496,44 +524,205 @@
     }
   }
 
-  function shareCartWithPhotos() {
-    if (!cart.length) return;
-    var seen = {};
-    var unique = [];
-    cart.forEach(function (item) {
-      if (!seen[item.id]) {
-        seen[item.id] = true;
-        unique.push(productById[item.id]);
-      }
+  function canCopyImage() {
+    return Boolean(
+      window.isSecureContext &&
+        navigator.clipboard &&
+        navigator.clipboard.write &&
+        window.ClipboardItem
+    );
+  }
+
+  function loadImage(src) {
+    return new Promise(function (resolve, reject) {
+      var img = new Image();
+      img.onload = function () {
+        resolve(img);
+      };
+      img.onerror = reject;
+      img.src = src;
     });
-    cartUi.shareStatus.textContent = "Preparando as fotos...";
-    Promise.all(
-      unique.map(function (product) {
-        return fetch(imageUrl(product))
-          .then(function (res) {
-            return res.blob();
-          })
-          .then(function (blob) {
-            return new File([blob], product.id + ".jpg", {
-              type: blob.type || "image/jpeg",
-            });
-          });
+  }
+
+  function canvasToBlob(canvas, type, quality) {
+    return new Promise(function (resolve, reject) {
+      canvas.toBlob(function (blob) {
+        if (blob) resolve(blob);
+        else reject(new Error("canvas vazio"));
+      }, type, quality);
+    });
+  }
+
+  /* encolhe a fonte até o texto caber; se ainda assim não couber, corta */
+  function fitText(ctx, text, maxWidth, size, weight) {
+    var font = function (px) {
+      return weight + " " + px + "px system-ui, Arial, sans-serif";
+    };
+    ctx.font = font(size);
+    while (ctx.measureText(text).width > maxWidth && size > 16) {
+      size -= 2;
+      ctx.font = font(size);
+    }
+    while (ctx.measureText(text).width > maxWidth && text.length > 1) {
+      text = text.slice(0, -2) + "…";
+    }
+    return text;
+  }
+
+  /* foto quadrada da camisa + faixa escura com nome, tamanho e quantidade */
+  function makeTile(item, size) {
+    var product = productById[item.id];
+    return loadImage(imageUrl(product)).then(function (img) {
+      var S = size || Math.min(900, img.naturalWidth || 900);
+      var k = S / 900;
+      var canvas = document.createElement("canvas");
+      canvas.width = S;
+      canvas.height = S;
+      var ctx = canvas.getContext("2d");
+      ctx.drawImage(img, 0, 0, S, S);
+
+      var barH = Math.round(140 * k);
+      ctx.fillStyle = "rgba(10, 10, 10, 0.9)";
+      ctx.fillRect(0, S - barH, S, barH);
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = "#f5f5f5";
+      var name = fitText(ctx, product.name, S - 48 * k, Math.round(36 * k), 800);
+      ctx.fillText(name, 24 * k, S - barH + barH * 0.32);
+      ctx.fillStyle = "#1fdd6d";
+      var detail = "Tamanho " + item.size + "   •   Qtd " + item.qty;
+      ctx.font = "800 " + Math.round(44 * k) + "px system-ui, Arial, sans-serif";
+      ctx.fillText(detail, 24 * k, S - barH + barH * 0.72);
+      return canvas;
+    });
+  }
+
+  /* uma imagem JPEG por item do carrinho (usada na folha de compartilhar) */
+  function buildOrderFiles() {
+    return Promise.all(
+      cart.map(function (item) {
+        return makeTile(item).then(function (canvas) {
+          return canvasToBlob(canvas, "image/jpeg", 0.9);
+        });
       })
-    )
-      .then(function (files) {
-        return navigator.share({ files: files, text: cartMessage() });
-      })
-      .then(function () {
-        cartUi.shareStatus.textContent = "";
-      })
-      .catch(function (err) {
-        if (err && err.name === "AbortError") {
-          cartUi.shareStatus.textContent = "";
-          return;
-        }
-        cartUi.shareStatus.textContent =
-          "Não deu pra anexar as fotos — use o botão verde (as fotos vão como link).";
+    ).then(function (blobs) {
+      return blobs.map(function (blob, i) {
+        var name = i + 1 + "-" + cart[i].id + "-" + cart[i].size + ".jpg";
+        return new File([blob], name, { type: "image/jpeg" });
       });
+    });
+  }
+
+  /* uma única imagem com todas as camisas lado a lado (área de transferência) */
+  function buildOrderCollage() {
+    var n = cart.length;
+    var cols = n === 1 ? 1 : n <= 4 ? 2 : 3;
+    var tile = n <= 2 ? 700 : n <= 4 ? 600 : 420;
+    var rows = Math.ceil(n / cols);
+    return Promise.all(
+      cart.map(function (item) {
+        return makeTile(item, tile);
+      })
+    ).then(function (tiles) {
+      var canvas = document.createElement("canvas");
+      canvas.width = cols * tile;
+      canvas.height = rows * tile;
+      var ctx = canvas.getContext("2d");
+      ctx.fillStyle = "#0a0a0a";
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      tiles.forEach(function (t, i) {
+        ctx.drawImage(t, (i % cols) * tile, Math.floor(i / cols) * tile);
+      });
+      return canvasToBlob(canvas, "image/png");
+    });
+  }
+
+  /* prepara as imagens assim que o carrinho muda, pra o toque em "Enviar"
+     chamar o compartilhamento na hora (o navegador exige que seja logo
+     depois do toque) */
+  function prepareOrderFiles() {
+    var key = cart
+      .map(function (item) {
+        return item.id + "|" + item.size + "|" + item.qty;
+      })
+      .join(",");
+    if (!cart.length) {
+      prepared = { key: "", promise: null };
+      return null;
+    }
+    if (prepared.key === key) return prepared.promise;
+    var promise = buildOrderFiles();
+    prepared = { key: key, promise: promise };
+    promise.catch(function () {
+      if (prepared.promise === promise) prepared = { key: "", promise: null };
+    });
+    return promise;
+  }
+
+  function setCartStatus(message) {
+    cartUi.status.textContent = message || "";
+    cartUi.openWa.hidden = true;
+  }
+
+  function sendTextOnly(message) {
+    window.open(whatsappLink(cartMessage(true)), "_blank");
+    setCartStatus(message);
+  }
+
+  function sendOrder() {
+    if (!cart.length) return;
+    setCartStatus("");
+
+    if (canShareFiles()) {
+      setCartStatus("Preparando as fotos...");
+      prepareOrderFiles()
+        .then(function (files) {
+          if (!navigator.canShare({ files: files })) throw new Error("sem suporte");
+          return navigator.share({ files: files, text: cartMessage(false) });
+        })
+        .then(function () {
+          setCartStatus("");
+        })
+        .catch(function (err) {
+          if (err && err.name === "AbortError") {
+            setCartStatus("");
+            return;
+          }
+          setCartStatus(
+            "Não deu pra anexar as imagens neste aparelho — use \"Enviar com as fotos em link\"."
+          );
+        });
+      return;
+    }
+
+    if (canCopyImage()) {
+      setCartStatus("Preparando a imagem do pedido...");
+      navigator.clipboard
+        .write([new ClipboardItem({ "image/png": buildOrderCollage() })])
+        .then(function () {
+          var opened = window.open(whatsappLink(cartMessage(false)), "_blank");
+          if (opened) {
+            setCartStatus(
+              "Imagem do pedido copiada! Na conversa do WhatsApp, cole com Ctrl+V e envie."
+            );
+          } else {
+            setCartStatus(
+              "Imagem do pedido copiada! Abra o WhatsApp, cole com Ctrl+V e envie."
+            );
+            cartUi.openWa.href = whatsappLink(cartMessage(false));
+            cartUi.openWa.hidden = false;
+          }
+        })
+        .catch(function () {
+          sendTextOnly(
+            "Não consegui copiar a imagem — abri o WhatsApp com as fotos em link."
+          );
+        });
+      return;
+    }
+
+    sendTextOnly(
+      "Neste navegador não dá pra anexar imagem — abri o WhatsApp com as fotos em link."
+    );
   }
 
   function renderCart() {
@@ -546,7 +735,7 @@
     );
 
     cartUi.body.innerHTML = "";
-    cartUi.shareStatus.textContent = "";
+    setCartStatus("");
 
     if (!cart.length) {
       var empty = document.createElement("p");
@@ -635,8 +824,11 @@
     });
 
     cartUi.total.textContent = "Total: " + cartTotals().label;
-    cartUi.checkout.href = whatsappLink(cartMessage());
+    cartUi.textLink.href = whatsappLink(cartMessage(true));
+    var canShare = canShareFiles();
+    cartUi.note.textContent = canShare ? NOTE_SHARE : canCopyImage() ? NOTE_COPY : NOTE_LINK;
     cartUi.foot.hidden = false;
+    if (canShare) prepareOrderFiles();
   }
 
   function cartChanged() {
