@@ -409,7 +409,8 @@
     fab.setAttribute("aria-label", "Abrir carrinho");
     fab.innerHTML =
       '<svg viewBox="0 0 24 24" width="26" height="26" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' +
-      '<path d="M6 7h12l-1 13H7L6 7z"/><path d="M9 7a3 3 0 0 1 6 0"/></svg>' +
+      '<path d="M2 3h3l2.7 12.4a1 1 0 0 0 1 .8h8.9a1 1 0 0 0 1-.8L20 7H5.6"/>' +
+      '<circle cx="9.5" cy="20" r="1.5"/><circle cx="17" cy="20" r="1.5"/></svg>' +
       '<span class="cart-fab__count" hidden></span>';
     document.body.appendChild(fab);
 
