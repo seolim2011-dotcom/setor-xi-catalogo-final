@@ -1044,6 +1044,33 @@ body.modal-open {
   border-color: var(--muted);
 }
 
+/* ---------- Questionário da primeira visita ---------- */
+
+.survey {
+  z-index: 200;
+}
+
+/* uma coluna só, altura do conteúdo (mais específico que as regras do modal) */
+.survey .modal__dialog {
+  grid-template-columns: 1fr;
+  grid-template-rows: auto;
+  width: min(460px, 100%);
+  height: auto;
+  max-height: 100%;
+}
+
+.survey__lead {
+  margin: 0;
+  color: var(--muted);
+}
+
+.survey__privacy {
+  margin: 2px 0 0;
+  font-size: 0.72rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+
 /* ---------- Carrinho ---------- */
 
 .cart-fab {

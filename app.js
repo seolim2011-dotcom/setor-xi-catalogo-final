@@ -46,6 +46,21 @@
   /* Carrinho: tamanhos disponíveis, endereço público do site (as fotos
      vão como link na mensagem do WhatsApp) e chave do localStorage. */
   var SIZES = ["PP", "P", "M", "G", "GG", "2GG", "3GG", "4GG"];
+  /* categoria Kids: tamanho por idade (conferir com o estoque real) */
+  var KIDS_CATEGORY = "Kids";
+  var KIDS_SIZES = [
+    "2 anos",
+    "4 anos",
+    "6 anos",
+    "8 anos",
+    "10 anos",
+    "12 anos",
+    "14 anos",
+    "16 anos",
+  ];
+  function sizesFor(product) {
+    return product && product.category === KIDS_CATEGORY ? KIDS_SIZES : SIZES;
+  }
   var SITE_URL = "https://seolim2011-dotcom.github.io/setor-xi-catalogo-final/";
   var CART_KEY = "setorxi-cart-v1";
 
@@ -148,17 +163,6 @@
       "</div>";
     document.body.appendChild(root);
 
-    var sizesList = root.querySelector(".modal__sizes-list");
-    SIZES.forEach(function (size) {
-      var chip = document.createElement("button");
-      chip.type = "button";
-      chip.className = "size-chip";
-      chip.dataset.size = size;
-      chip.textContent = size;
-      chip.setAttribute("aria-pressed", "false");
-      sizesList.appendChild(chip);
-    });
-
     root.addEventListener("click", function (e) {
       if (e.target.closest("[data-close]")) closeProduct();
       var thumbBtn = e.target.closest(".modal__thumb");
@@ -182,7 +186,9 @@
       price: root.querySelector(".modal__price"),
       story: root.querySelector(".modal__story"),
       sizes: root.querySelector(".modal__sizes"),
-      chips: root.querySelectorAll(".size-chip"),
+      sizesLabel: root.querySelector(".modal__sizes-label"),
+      sizesList: root.querySelector(".modal__sizes-list"),
+      chips: [],
       viewCart: root.querySelector(".modal__view-cart"),
       status: root.querySelector(".modal__add-status"),
       cta: root.querySelector(".modal__cta"),
@@ -243,6 +249,23 @@
     modal.viewCart.hidden = false;
   }
 
+  /* tamanhos mudam por produto: adulto (PP a 4GG) ou infantil (por idade) */
+  function renderSizeChips(product) {
+    modal.sizesLabel.textContent =
+      product.category === KIDS_CATEGORY ? "Tamanho (idade)" : "Tamanho";
+    modal.sizesList.innerHTML = "";
+    sizesFor(product).forEach(function (size) {
+      var chip = document.createElement("button");
+      chip.type = "button";
+      chip.className = "size-chip";
+      chip.dataset.size = size;
+      chip.textContent = size;
+      chip.setAttribute("aria-pressed", "false");
+      modal.sizesList.appendChild(chip);
+    });
+    modal.chips = modal.sizesList.querySelectorAll(".size-chip");
+  }
+
   function openProduct(product) {
     renderGallery(product);
     modal.category.textContent = product.category;
@@ -258,9 +281,7 @@
     }
     currentProduct = product;
     selectedSize = null;
-    modal.chips.forEach(function (chip) {
-      chip.setAttribute("aria-pressed", "false");
-    });
+    renderSizeChips(product);
     modal.sizes.classList.remove("is-error");
     modal.viewCart.hidden = true;
     setAddStatus("", false);
@@ -300,7 +321,7 @@
           return (
             item &&
             productById[item.id] &&
-            SIZES.indexOf(item.size) !== -1 &&
+            sizesFor(productById[item.id]).indexOf(item.size) !== -1 &&
             item.qty > 0
           );
         })
@@ -357,7 +378,7 @@
 
   function changeSize(index, size) {
     var line = cart[index];
-    if (!line || SIZES.indexOf(size) === -1) return;
+    if (!line || sizesFor(productById[line.id]).indexOf(size) === -1) return;
     var other = findLine(line.id, size);
     if (other && other !== line) {
       other.qty = Math.min(99, other.qty + line.qty);
@@ -779,7 +800,7 @@
       var select = document.createElement("select");
       select.className = "cart-item__size";
       select.setAttribute("aria-label", "Tamanho de " + product.name);
-      SIZES.forEach(function (size) {
+      sizesFor(product).forEach(function (size) {
         var option = document.createElement("option");
         option.value = size;
         option.textContent = size;
@@ -1348,9 +1369,224 @@
     });
   }
 
+  /* ============================================================
+     Questionário da primeira visita — sem banco de dados.
+     Aparece uma vez por navegador (o "já respondeu" fica no
+     localStorage) e as respostas vão pra mesma planilha do Google
+     do formulário de contato (CONTACT_SHEET_ENDPOINT).
+     Não trava a pessoa esperando a rede: o envio roda em segundo
+     plano e, se falhar, a resposta fica guardada no navegador e é
+     reenviada na próxima visita.
+     ============================================================ */
+  var SURVEY_ENABLED = true;
+  var SURVEY_DONE_KEY = "setorxi-questionario-v1";
+  var SURVEY_PENDING_KEY = "setorxi-questionario-pendente";
+  var SURVEY_AGES = ["Até 18", "18 a 24", "25 a 34", "35 a 44", "45 ou mais"];
+  var SURVEY_SOURCES = ["Instagram", "Indicação de amigo", "Evento / feira", "Outro"];
+  var surveyUi = null;
+  var surveySending = false;
+  var surveyPendingMemory = null;
+
+  function storageGet(key) {
+    try {
+      return localStorage.getItem(key);
+    } catch (err) {
+      return null;
+    }
+  }
+
+  function storageSet(key, value) {
+    try {
+      localStorage.setItem(key, value);
+    } catch (err) {
+      /* sem armazenamento: o questionário volta a aparecer na próxima visita */
+    }
+  }
+
+  function storageRemove(key) {
+    try {
+      localStorage.removeItem(key);
+    } catch (err) {
+      /* nada a fazer */
+    }
+  }
+
+  function optionsHtml(label, list) {
+    return (
+      '<option value="" disabled selected>' +
+      label +
+      "</option>" +
+      list
+        .map(function (item) {
+          return '<option value="' + item + '">' + item + "</option>";
+        })
+        .join("")
+    );
+  }
+
+  function buildSurvey() {
+    var root = document.createElement("div");
+    root.className = "modal survey";
+    root.setAttribute("role", "dialog");
+    root.setAttribute("aria-modal", "true");
+    root.setAttribute("aria-labelledby", "survey-title");
+    root.innerHTML =
+      '<div class="modal__backdrop"></div>' +
+      '<div class="modal__dialog">' +
+      '<div class="modal__body">' +
+      '<span class="modal__category">Antes de entrar</span>' +
+      '<h2 class="modal__name" id="survey-title">Conta pra gente quem você é</h2>' +
+      '<p class="survey__lead">Leva menos de um minuto e a gente só pergunta isso uma vez.</p>' +
+      '<form class="contact-form survey__form">' +
+      '<input class="contact-form__field" type="text" name="nome" placeholder="Seu nome" autocomplete="name" maxlength="80" required />' +
+      '<input class="contact-form__field" type="text" name="cidade" placeholder="Cidade / bairro" autocomplete="address-level2" maxlength="80" required />' +
+      '<input class="contact-form__field" type="text" name="time" placeholder="Time do coração" maxlength="80" required />' +
+      '<select class="contact-form__field" name="faixa_etaria" required>' +
+      optionsHtml("Faixa etária", SURVEY_AGES) +
+      "</select>" +
+      '<select class="contact-form__field" name="como_conheceu" required>' +
+      optionsHtml("Como conheceu a Setor XI?", SURVEY_SOURCES) +
+      "</select>" +
+      '<textarea class="contact-form__field contact-form__field--area" name="resposta" rows="2" maxlength="300" placeholder="O que mais te chama atenção num lançamento de camisa? (opcional)"></textarea>' +
+      '<input class="contact-form__hp" type="text" name="_gotcha" tabindex="-1" autocomplete="off" aria-hidden="true" />' +
+      '<button type="submit" class="contact-btn contact-btn--primary contact-form__submit">Entrar no catálogo</button>' +
+      "</form>" +
+      '<p class="survey__privacy">Usamos as respostas só pra conhecer melhor quem curte a Setor XI.</p>' +
+      "</div>" +
+      "</div>";
+    document.body.appendChild(root);
+
+    var form = root.querySelector(".survey__form");
+    form.addEventListener("submit", submitSurvey);
+
+    // sem botão de fechar nem Esc: o foco fica preso no questionário
+    root.addEventListener("keydown", function (e) {
+      if (e.key !== "Tab") return;
+      var focusable = root.querySelectorAll(
+        'input:not([tabindex="-1"]), select, textarea, button'
+      );
+      if (!focusable.length) return;
+      var first = focusable[0];
+      var last = focusable[focusable.length - 1];
+      if (e.shiftKey && document.activeElement === first) {
+        e.preventDefault();
+        last.focus();
+      } else if (!e.shiftKey && document.activeElement === last) {
+        e.preventDefault();
+        first.focus();
+      }
+    });
+
+    return { root: root, form: form };
+  }
+
+  function openSurvey() {
+    surveyUi = buildSurvey();
+    document.body.classList.add("modal-open");
+    surveyUi.form.nome.focus();
+  }
+
+  function closeSurvey() {
+    if (!surveyUi) return;
+    surveyUi.root.remove();
+    surveyUi = null;
+    document.body.classList.remove("modal-open");
+    var cta = document.querySelector(".hero__cta");
+    if (cta && cta.focus) cta.focus();
+  }
+
+  function postSurvey(data) {
+    var body = new FormData();
+    Object.keys(data).forEach(function (key) {
+      body.append(key, data[key]);
+    });
+    // campos de contato preenchidos com o resumo: assim o script que já
+    // grava o formulário de contato guarda o questionário sem mudar nada
+    body.append("contato", "(questionário) " + data.cidade);
+    body.append(
+      "interesse",
+      "Time: " +
+        data.time +
+        " | Idade: " +
+        data.faixa_etaria +
+        " | Conheceu por: " +
+        data.como_conheceu +
+        (data.resposta ? " | Chama atenção: " + data.resposta : "")
+    );
+    body.append("tipo", "questionario");
+    body.append("_gotcha", "");
+    return fetch(CONTACT_SHEET_ENDPOINT, { method: "POST", body: body })
+      .then(function (response) {
+        return response.json();
+      })
+      .then(function (result) {
+        if (!result || (result.result !== "success" && result.ok !== true)) {
+          throw new Error("resposta ruim do script");
+        }
+      });
+  }
+
+  function sendPendingSurvey() {
+    if (surveySending) return;
+    if (CONTACT_SHEET_ENDPOINT.indexOf("SEU_SCRIPT_ID") !== -1) return;
+    var raw = storageGet(SURVEY_PENDING_KEY);
+    var data = null;
+    if (raw) {
+      try {
+        data = JSON.parse(raw);
+      } catch (err) {
+        storageRemove(SURVEY_PENDING_KEY);
+      }
+    }
+    data = data || surveyPendingMemory;
+    if (!data) return;
+    surveySending = true;
+    postSurvey(data)
+      .then(function () {
+        storageRemove(SURVEY_PENDING_KEY);
+        surveyPendingMemory = null;
+      })
+      .catch(function () {
+        /* fica guardado e tenta de novo na próxima visita */
+      })
+      .then(function () {
+        surveySending = false;
+      });
+  }
+
+  function submitSurvey(e) {
+    e.preventDefault();
+    var form = e.target;
+    if (!form.checkValidity()) return;
+    var data = {};
+    ["nome", "cidade", "time", "faixa_etaria", "como_conheceu", "resposta"].forEach(
+      function (name) {
+        data[name] = form.elements[name].value.trim();
+      }
+    );
+    var isBot = Boolean(form.elements._gotcha.value);
+
+    storageSet(SURVEY_DONE_KEY, String(Date.now()));
+    if (!isBot) {
+      surveyPendingMemory = data;
+      storageSet(SURVEY_PENDING_KEY, JSON.stringify(data));
+      sendPendingSurvey();
+    }
+    closeSurvey();
+  }
+
+  function initSurvey() {
+    if (!SURVEY_ENABLED) return;
+    sendPendingSurvey();
+    if (storageGet(SURVEY_DONE_KEY)) return;
+    if (/bot|crawl|spider|slurp|lighthouse/i.test(navigator.userAgent)) return;
+    openSurvey();
+  }
+
   /* --- Início --- */
   if (!gridEl || !filtersEl) return;
   buildFilters();
   updateBackground();
   renderGrid(true);
+  initSurvey();
 })();
