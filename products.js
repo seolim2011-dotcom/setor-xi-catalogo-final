@@ -1354,4 +1354,12 @@ window.SETOR_XI_PRODUCTS = [
   { id: "kids-sao-paulo-casa", name: "São Paulo 2026/27 — Casa (Kids)", category: "Kids", price: 140, image: "fotos/kids-sao-paulo-casa.jpg", badge: null },
   { id: "kids-tottenham-casa", name: "Tottenham 2026/27 — Casa (Kids)", category: "Kids", price: 140, image: "fotos/kids-tottenham-casa.jpg", badge: null },
   { id: "kids-uruguai-casa", name: "Uruguai 2026/27 — Casa (Kids)", category: "Kids", price: 140, image: "fotos/kids-uruguai-casa.jpg", badge: null },
+  { id: "clube-aston-villa-fora", name: "Aston Villa 2026/27 — Fora", category: "Camisas de Clube", price: 170, image: "fotos/clube-aston-villa-fora.jpg", badge: null },
+  { id: "clube-palmeiras-terceira", name: "Palmeiras 2026/27 — Terceira", category: "Camisas de Clube", price: 170, image: "fotos/clube-palmeiras-terceira.jpg", badge: null },
+  { id: "retro-palmeiras-94-95-fora", name: "Palmeiras 1994/95 — Fora", category: "Retrô", price: 200, image: "fotos/retro-palmeiras-94-95-fora.jpg", badge: null },
+  { id: "retro-palmeiras-99-00-casa", name: "Palmeiras 1999/00 — Casa", category: "Retrô", price: 200, image: "fotos/retro-palmeiras-99-00-casa.jpg", badge: null },
+  { id: "kids-palmeiras-24-25-casa", name: "Palmeiras 2024/25 — Casa (Kids)", category: "Kids", price: 140, image: "fotos/kids-palmeiras-24-25-casa.jpg", badge: null },
+  { id: "kids-palmeiras-fora", name: "Palmeiras 2026/27 — Fora (Kids)", category: "Kids", price: 140, image: "fotos/kids-palmeiras-fora.jpg", badge: null },
+  { id: "kids-palmeiras-terceira", name: "Palmeiras 2026/27 — Terceira (Kids)", category: "Kids", price: 140, image: "fotos/kids-palmeiras-terceira.jpg", badge: null },
+  { id: "kids-real-madrid-casa", name: "Real Madrid 2026/27 — Casa (Kids)", category: "Kids", price: 140, image: "fotos/kids-real-madrid-casa.jpg", badge: null },
 ];
