@@ -1678,3 +1678,95 @@ html.hero-locked .cart-fab {
     display: none;
   }
 }
+
+/* ---------- Promoção de fim de ano ---------- */
+
+.promo-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 4px 18px;
+  padding: 9px 16px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: var(--step-1);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  text-align: center;
+}
+
+.promo-bar strong {
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.price-old {
+  margin-right: 8px;
+  color: var(--muted);
+  font-size: 0.78em;
+  font-weight: 500;
+  text-decoration: line-through;
+}
+
+.price-now {
+  color: var(--white);
+}
+
+.price-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font-size: 0.62em;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  vertical-align: middle;
+}
+
+.price-multi {
+  display: block;
+  margin-top: 4px;
+  color: var(--accent);
+  font-size: var(--step-1);
+  font-weight: 600;
+}
+
+.cart__promo {
+  margin: 0;
+  padding: 9px 12px;
+  border: 1px solid var(--accent);
+  border-radius: 10px;
+  color: var(--accent);
+  font-size: var(--step-1);
+  font-weight: 600;
+  line-height: 1.35;
+}
+
+.cart__promo[hidden] {
+  display: none;
+}
+
+.card__price:not(.card__price--contact),
+.modal__price {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px 8px;
+}
+
+.card__price .price-old,
+.card__price .price-now,
+.card__price .price-tag,
+.modal__price .price-old,
+.modal__price .price-now,
+.modal__price .price-tag {
+  margin: 0;
+}
+
+.modal__price .price-multi {
+  flex-basis: 100%;
+}

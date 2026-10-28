@@ -39,6 +39,44 @@
     currency: "BRL",
   });
 
+  /* Promoção de fim de ano: PROMO.on = false desliga tudo (faixa, preços
+     riscados, desconto do carrinho e da mensagem do WhatsApp). */
+  var PROMO = { on: true, rate: 0.1, rateMulti: 0.15, minQty: 2 };
+
+  function promoRate(qty) {
+    if (!PROMO.on) return 0;
+    return qty >= PROMO.minQty ? PROMO.rateMulti : PROMO.rate;
+  }
+
+  function salePrice(price, rate) {
+    return Math.round(price * (1 - rate) * 100) / 100;
+  }
+
+  function pct(rate) {
+    return Math.round(rate * 100) + "%";
+  }
+
+  /* Preenche um <p> de preço: antigo riscado + novo (com a promoção). */
+  function fillPrice(el, price) {
+    el.textContent = "";
+    if (!PROMO.on) {
+      el.textContent = BRL.format(price);
+      return;
+    }
+    var old = document.createElement("del");
+    old.className = "price-old";
+    old.textContent = BRL.format(price);
+    var now = document.createElement("span");
+    now.className = "price-now";
+    now.textContent = BRL.format(salePrice(price, PROMO.rate));
+    var tag = document.createElement("span");
+    tag.className = "price-tag";
+    tag.textContent = "-" + pct(PROMO.rate);
+    el.appendChild(old);
+    el.appendChild(now);
+    el.appendChild(tag);
+  }
+
   var WHATSAPP_URL = "https://wa.me/5545991271005";
   var INSTAGRAM_URL = "https://instagram.com/setorxi";
   var CONTACT_CATEGORY = "Entre em contato";
@@ -273,7 +311,16 @@
     modal.story.textContent = product.story || STORY_FALLBACK;
     modal.story.classList.toggle("modal__story--featured", Boolean(product.story));
     if (typeof product.price === "number") {
-      modal.price.textContent = BRL.format(product.price);
+      fillPrice(modal.price, product.price);
+      if (PROMO.on) {
+        var multi = document.createElement("span");
+        multi.className = "price-multi";
+        multi.textContent =
+          "Levando " + PROMO.minQty + " ou mais peças: " +
+          BRL.format(salePrice(product.price, PROMO.rateMulti)) + " cada (-" +
+          pct(PROMO.rateMulti) + ")";
+        modal.price.appendChild(multi);
+      }
     } else if (typeof product.price === "string" && product.price.trim()) {
       modal.price.textContent = product.price;
     } else {
@@ -389,24 +436,61 @@
     cartChanged();
   }
 
+  /* O desconto da promoção depende da quantidade de peças no carrinho:
+     10% com 1 peça, 15% com 2 ou mais. */
   function cartTotals() {
+    var qty = 0;
+    cart.forEach(function (item) {
+      qty += item.qty;
+    });
+    var rate = promoRate(qty);
     var sum = 0;
+    var total = 0;
     var toQuote = false;
     cart.forEach(function (item) {
       var price = productById[item.id].price;
-      if (typeof price === "number") sum += price * item.qty;
-      else toQuote = true;
+      if (typeof price === "number") {
+        sum += price * item.qty;
+        total += salePrice(price, rate) * item.qty;
+      } else toQuote = true;
     });
+    total = Math.round(total * 100) / 100;
     var label;
-    if (sum > 0) label = BRL.format(sum) + (toQuote ? " + itens a combinar" : "");
+    if (total > 0) label = BRL.format(total) + (toQuote ? " + itens a combinar" : "");
     else label = "a combinar";
-    return { label: label };
+    return {
+      label: label,
+      qty: qty,
+      rate: rate,
+      sum: sum,
+      total: total,
+      discount: Math.round((sum - total) * 100) / 100,
+    };
   }
 
-  function priceLabel(product) {
-    return typeof product.price === "number"
-      ? BRL.format(product.price) + " cada"
-      : "a combinar";
+  function priceLabel(product, rate) {
+    if (typeof product.price !== "number") return "a combinar";
+    if (!rate) return BRL.format(product.price) + " cada";
+    return (
+      BRL.format(salePrice(product.price, rate)) + " cada (de " +
+      BRL.format(product.price) + ", -" + pct(rate) + ")"
+    );
+  }
+
+  /* Texto da faixa de promoção dentro do carrinho. */
+  function cartPromoText(t) {
+    if (!PROMO.on) return "";
+    if (t.qty < PROMO.minQty) {
+      var faltam = PROMO.minQty - t.qty;
+      return (
+        "Promoção: " + pct(PROMO.rate) + " de desconto. Leve mais " + faltam +
+        (faltam === 1 ? " peça" : " peças") + " e o desconto sobe para " +
+        pct(PROMO.rateMulti) + "!"
+      );
+    }
+    var text = "Promoção aplicada: " + pct(t.rate) + " de desconto";
+    if (t.discount > 0) text += " (você economiza " + BRL.format(t.discount) + ")";
+    return text + ".";
   }
 
   /* withLinks=false: as fotos vão como imagem (cada uma com tamanho e
@@ -418,18 +502,25 @@
         : "Olá! Quero fazer este pedido na Setor XI (as fotos estão nas imagens):",
       "",
     ];
+    var totals = cartTotals();
     cart.forEach(function (item, index) {
       var product = productById[item.id];
       lines.push(index + 1 + ") " + product.name);
       lines.push("Tamanho: " + item.size + " | Qtd: " + item.qty);
-      lines.push("Valor: " + priceLabel(product));
+      lines.push("Valor: " + priceLabel(product, totals.rate));
       if (withLinks) {
         var photo = photoUrl(product);
         if (photo) lines.push("Foto: " + photo);
       }
       lines.push("");
     });
-    lines.push("Total: " + cartTotals().label);
+    if (totals.rate > 0 && totals.discount > 0) {
+      lines.push("Subtotal: " + BRL.format(totals.sum));
+      lines.push(
+        "Desconto da promoção (" + pct(totals.rate) + "): -" + BRL.format(totals.discount)
+      );
+    }
+    lines.push("Total: " + totals.label);
     return lines.join("\n");
   }
 
@@ -460,6 +551,7 @@
       "</header>" +
       '<div class="cart__body"></div>' +
       '<footer class="cart__foot" hidden>' +
+      '<p class="cart__promo"></p>' +
       '<p class="cart__total"></p>' +
       '<button type="button" class="cart__send">Enviar pedido no WhatsApp</button>' +
       '<p class="cart__status" role="status" aria-live="polite"></p>' +
@@ -477,6 +569,7 @@
       root: root,
       body: root.querySelector(".cart__body"),
       foot: root.querySelector(".cart__foot"),
+      promo: root.querySelector(".cart__promo"),
       total: root.querySelector(".cart__total"),
       send: root.querySelector(".cart__send"),
       status: root.querySelector(".cart__status"),
@@ -792,7 +885,7 @@
 
       var price = document.createElement("p");
       price.className = "cart-item__price";
-      price.textContent = priceLabel(product);
+      price.textContent = priceLabel(product, cartTotals().rate);
 
       var controls = document.createElement("div");
       controls.className = "cart-item__controls";
@@ -845,7 +938,10 @@
       cartUi.body.appendChild(row);
     });
 
-    cartUi.total.textContent = "Total: " + cartTotals().label;
+    var totals = cartTotals();
+    cartUi.promo.textContent = cartPromoText(totals);
+    cartUi.promo.hidden = !PROMO.on;
+    cartUi.total.textContent = "Total: " + totals.label;
     cartUi.textLink.href = whatsappLink(cartMessage(true));
     var canShare = canShareFiles();
     cartUi.note.textContent = canShare ? NOTE_SHARE : canCopyImage() ? NOTE_COPY : NOTE_LINK;
@@ -1277,7 +1373,7 @@
     if (typeof product.price === "number") {
       price = document.createElement("p");
       price.className = "card__price";
-      price.textContent = BRL.format(product.price);
+      fillPrice(price, product.price);
     } else if (typeof product.price === "string" && product.price.trim()) {
       price = document.createElement("p");
       price.className = "card__price";
@@ -1583,10 +1679,24 @@
     openSurvey();
   }
 
+  /* --- Faixa da promoção (topo do site) --- */
+  function initPromoBar() {
+    if (!PROMO.on) return;
+    var bar = document.createElement("div");
+    bar.className = "promo-bar";
+    bar.setAttribute("role", "note");
+    bar.innerHTML =
+      "<strong>Promoção de fim de ano</strong>" +
+      "<span>" + pct(PROMO.rate) + " OFF em toda a loja</span>" +
+      "<span>" + pct(PROMO.rateMulti) + " OFF levando " + PROMO.minQty + " ou mais peças</span>";
+    document.body.insertBefore(bar, document.body.firstChild);
+  }
+
   /* --- Início --- */
   if (!gridEl || !filtersEl) return;
   buildFilters();
   updateBackground();
   renderGrid(true);
   initSurvey();
+  initPromoBar();
 })();
