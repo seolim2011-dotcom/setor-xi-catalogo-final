@@ -1770,3 +1770,117 @@ html.hero-locked .cart-fab {
 .modal__price .price-multi {
   flex-basis: 100%;
 }
+
+/* ---------- Política de cookies e aviso ---------- */
+
+.policy {
+  z-index: 150;
+}
+
+.policy .modal__dialog {
+  display: block;
+  position: relative;
+  grid-template-columns: 1fr;
+  width: min(580px, 100%);
+  height: auto;
+  max-height: calc(100dvh - 40px);
+  overflow: hidden;
+}
+
+.policy__body {
+  max-height: calc(100dvh - 40px);
+  overflow-y: auto;
+  gap: 6px;
+}
+
+.policy__body h3 {
+  margin: 14px 0 0;
+  font-size: var(--step1);
+  font-weight: 700;
+}
+
+.policy__body p,
+.policy__body ul {
+  margin: 0;
+  color: var(--muted);
+  font-size: var(--step0);
+  line-height: 1.55;
+}
+
+.policy__body ul {
+  padding-left: 18px;
+}
+
+.policy__body li + li {
+  margin-top: 4px;
+}
+
+.policy__body strong {
+  color: var(--white);
+}
+
+.policy__date {
+  color: var(--muted);
+  font-size: var(--step-1);
+}
+
+.cookie-bar {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  z-index: 90;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px 20px;
+  padding: 14px max(16px, calc((100vw - 1100px) / 2)) calc(14px + env(safe-area-inset-bottom, 0px));
+  background: rgba(18, 18, 18, 0.97);
+  border-top: 1px solid var(--border);
+}
+
+.cookie-bar__text {
+  flex: 1 1 320px;
+  margin: 0;
+  color: var(--white);
+  font-size: var(--step0);
+  line-height: 1.45;
+}
+
+.cookie-bar__actions {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.cookie-bar__more {
+  color: var(--muted);
+  font-size: var(--step0);
+  text-decoration: underline;
+}
+
+.cookie-bar__more:hover {
+  color: var(--white);
+}
+
+.cookie-bar__ok {
+  min-height: 42px;
+  padding: 0 22px;
+  border: none;
+  border-radius: 999px;
+  background: var(--accent);
+  color: var(--accent-ink);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.cookie-bar__ok:hover {
+  background: var(--accent-hover);
+}
+
+.policy__body {
+  scrollbar-color: #3a3a3a transparent;
+  scrollbar-width: thin;
+}

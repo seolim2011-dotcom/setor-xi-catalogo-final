@@ -6,3 +6,5 @@ desktop.ini
 # Editores
 .vscode/
 .idea/
+
+tools/out/

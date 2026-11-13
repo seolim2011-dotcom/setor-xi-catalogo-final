@@ -1474,7 +1474,9 @@
      plano e, se falhar, a resposta fica guardada no navegador e é
      reenviada na próxima visita.
      ============================================================ */
-  var SURVEY_ENABLED = true;
+  /* Desligado a pedido do Nicolas (o questionário não abre mais na entrada).
+     Pra religar: trocar para true e rodar o build. */
+  var SURVEY_ENABLED = false;
   var SURVEY_DONE_KEY = "setorxi-questionario-v1";
   var SURVEY_PENDING_KEY = "setorxi-questionario-pendente";
   var SURVEY_AGES = ["Até 18", "18 a 24", "25 a 34", "35 a 44", "45 ou mais"];
@@ -1672,11 +1674,122 @@
   }
 
   function initSurvey() {
+    sendPendingSurvey(); // ainda reenvia respostas antigas que ficaram pendentes
     if (!SURVEY_ENABLED) return;
-    sendPendingSurvey();
     if (storageGet(SURVEY_DONE_KEY)) return;
     if (/bot|crawl|spider|slurp|lighthouse/i.test(navigator.userAgent)) return;
     openSurvey();
+  }
+
+  /* --- Política de cookies + aviso na primeira visita ---
+     O site não usa cookies de publicidade nem de análise: só o
+     localStorage essencial (carrinho e a escolha neste aviso). */
+  var COOKIE_KEY = "setorxi-cookies-v1";
+  var POLICY_HASH = "#politica-de-cookies";
+  var policyUi = null;
+  var policyOpener = null;
+
+  function policyHtml() {
+    return (
+      '<span class="modal__category">Privacidade</span>' +
+      '<h2 class="modal__name" id="policy-title">Política de cookies</h2>' +
+      '<p class="policy__date">Atualizada em novembro de 2026</p>' +
+      "<h3>O que são cookies</h3>" +
+      "<p>São pequenos dados que um site guarda no seu navegador para lembrar de você. Alguns são indispensáveis para o site funcionar; outros servem para anúncios ou para medir visitas.</p>" +
+      "<h3>O que o site da Setor XI guarda</h3>" +
+      "<ul>" +
+      "<li><strong>Carrinho:</strong> as camisas, os tamanhos e as quantidades que você escolheu, para você não perder o pedido ao fechar a página.</li>" +
+      "<li><strong>Esta escolha:</strong> o fato de você ter lido o aviso de cookies, para ele não aparecer de novo.</li>" +
+      "</ul>" +
+      "<p>Esses dados ficam só no seu aparelho (armazenamento local do navegador), não são enviados para a gente e são essenciais para o carrinho funcionar. Por isso não precisam de consentimento.</p>" +
+      "<h3>O que não usamos</h3>" +
+      "<p>Não usamos cookies de publicidade, de rastreamento nem ferramentas de análise de visitas, e não vendemos nem compartilhamos dados de navegação.</p>" +
+      "<h3>Dados que você envia por vontade própria</h3>" +
+      "<ul>" +
+      "<li><strong>Formulário de contato:</strong> nome, contato e interesse vão para uma planilha da loja (Google Planilhas, processada pelo Google) só para a gente responder você.</li>" +
+      "<li><strong>Pedido pelo WhatsApp:</strong> a mensagem é montada no seu aparelho e enviada por você mesmo, pelo WhatsApp.</li>" +
+      "</ul>" +
+      "<h3>Links para outros serviços</h3>" +
+      "<p>Ao tocar nos links do WhatsApp ou do Instagram, você passa a seguir as regras de privacidade deles.</p>" +
+      "<h3>Como apagar esses dados</h3>" +
+      "<p>Use &ldquo;Esvaziar carrinho&rdquo; no carrinho, ou limpe os dados do site nas configurações do seu navegador.</p>" +
+      "<h3>Dúvidas</h3>" +
+      '<p>Fale com a gente pelo WhatsApp (45) 99127-1005 ou pelo Instagram @setorxi.</p>'
+    );
+  }
+
+  function buildPolicy() {
+    var root = document.createElement("div");
+    root.className = "modal policy";
+    root.setAttribute("role", "dialog");
+    root.setAttribute("aria-modal", "true");
+    root.setAttribute("aria-labelledby", "policy-title");
+    root.innerHTML =
+      '<div class="modal__backdrop" data-close></div>' +
+      '<div class="modal__dialog">' +
+      '<button type="button" class="modal__close" data-close aria-label="Fechar">&times;</button>' +
+      '<div class="modal__body policy__body">' + policyHtml() + "</div>" +
+      "</div>";
+    root.addEventListener("click", function (e) {
+      if (e.target.closest("[data-close]")) closePolicy();
+    });
+    document.body.appendChild(root);
+    return { root: root, close: root.querySelector(".modal__close") };
+  }
+
+  function openPolicy(opener) {
+    if (policyUi) return;
+    policyOpener = opener || null;
+    policyUi = buildPolicy();
+    document.body.classList.add("modal-open");
+    policyUi.close.focus();
+  }
+
+  function closePolicy() {
+    if (!policyUi) return;
+    policyUi.root.remove();
+    policyUi = null;
+    document.body.classList.remove("modal-open");
+    if (location.hash === POLICY_HASH) {
+      history.replaceState(null, "", location.pathname + location.search);
+    }
+    if (policyOpener && policyOpener.focus) policyOpener.focus();
+    policyOpener = null;
+  }
+
+  function dismissCookieBar() {
+    var bar = document.querySelector(".cookie-bar");
+    if (bar) bar.remove();
+    storageSet(COOKIE_KEY, "1");
+  }
+
+  function initCookies() {
+    document.addEventListener("keydown", function (e) {
+      if (e.key === "Escape" && policyUi) closePolicy();
+    });
+    document.addEventListener("click", function (e) {
+      var link = e.target.closest("[data-open-policy]");
+      if (!link) return;
+      e.preventDefault();
+      openPolicy(link);
+    });
+    if (location.hash === POLICY_HASH) openPolicy(null);
+
+    if (storageGet(COOKIE_KEY)) return;
+    if (/bot|crawl|spider|slurp|lighthouse/i.test(navigator.userAgent)) return;
+    var bar = document.createElement("div");
+    bar.className = "cookie-bar";
+    bar.setAttribute("role", "region");
+    bar.setAttribute("aria-label", "Aviso de cookies");
+    bar.innerHTML =
+      '<p class="cookie-bar__text">Este site guarda no seu aparelho só o necessário para o carrinho funcionar. ' +
+      "Não usamos cookies de publicidade nem de rastreamento.</p>" +
+      '<div class="cookie-bar__actions">' +
+      '<a class="cookie-bar__more" href="' + POLICY_HASH + '" data-open-policy>Política de cookies</a>' +
+      '<button type="button" class="cookie-bar__ok">Entendi</button>' +
+      "</div>";
+    bar.querySelector(".cookie-bar__ok").addEventListener("click", dismissCookieBar);
+    document.body.appendChild(bar);
   }
 
   /* --- Faixa da promoção (topo do site) --- */
@@ -1699,4 +1812,5 @@
   renderGrid(true);
   initSurvey();
   initPromoBar();
+  initCookies();
 })();
